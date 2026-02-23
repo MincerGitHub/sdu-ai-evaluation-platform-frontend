@@ -1,0 +1,50 @@
+body {
+    margin: 0;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+/* 整体布局 layout */
+
+.layout {
+    height: 100vh;
+}
+
+/* - 顶部导航 */
+.layout-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+/* - 右侧导航区 */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-menu {
+    border-bottom: none;
+}
+
+/* - 侧边栏 */
+.layout-sidebar {
+    box-sizing: border-box;
+    width: 260px;
+}
+
+.sidebar-menu {
+    border-right: none;
+}
+
+/* - 主内容区域 */
+.layout-main {
+    padding: 20px 40px;
+    box-sizing: border-box;
+}
