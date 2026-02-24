@@ -23,12 +23,12 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'StudentDashboard',
-          component: () => import('@/views/student/StudentDashboard.vue'),
+          component: () => import('@/views/dashboard/StudentDashboard.vue'),
         },
         {
-          path: 'physical-mental-basic',
-          name: 'StudentPhysicalMentalBasic',
-          component: () => import('@/views/student/StudentPhysicalMentalBasic.vue'),
+          path: 'application/:category/:subType',
+          name: 'StudentApplication',
+          component: () => import('@/views/application/StudentApplicationPage.vue'),
         },
         // ...else
       ],
@@ -43,7 +43,7 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'ReviewerDashboard',
-          component: () => import('@/views/reviewer/ReviewerDashboard.vue'),
+          component: () => import('@/views/dashboard/ReviewerDashboard.vue'),
         },
         // ...else
       ],
@@ -58,7 +58,7 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'TeacherDashboard',
-          component: () => import('@/views/teacher/TeacherDashboard.vue'),
+          component: () => import('@/views/dashboard/TeacherDashboard.vue'),
         },
         // ...else
       ],
@@ -68,7 +68,7 @@ const router = createRouter({
     {
       path: '/announcement',
       name: 'Announcement',
-      component: () => import('@/views/announcements/AnnouncementPage.vue'),
+      component: () => import('@/views/announcement/AnnouncementPage.vue'),
     },
 
     // 系统管理

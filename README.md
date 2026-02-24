@@ -1,3 +1,5 @@
+# AI 介入的综测评分系统-前端
+
 ## 1. 工程简介
 
 本项目是一个基于 **Vite + Vue3 + Pinia + Vue Router + Element Plus** 的单页应用，用于支持“综测智能评定”业务的前端界面。
@@ -13,7 +15,7 @@ node版本：v20.19.1
 
 后端接口规范见仓库内的 [`api.md`](./api.md) 和 [`all-api.md`](./all-api.md)。
 
-后端地址 <待补充>
+后端仓库地址： <https://github.com/DarkStars1922/zcpt>
 
 ---
 
