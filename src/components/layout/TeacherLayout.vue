@@ -13,7 +13,7 @@
           <el-menu-item index="announcements">
             公示
           </el-menu-item>
-          <el-sub-menu>
+          <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>

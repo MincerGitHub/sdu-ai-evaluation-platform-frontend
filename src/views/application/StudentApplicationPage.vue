@@ -6,13 +6,13 @@
             <el-button type="primary" @click="openCreate">新建申报</el-button>
         </div>
         <!-- 表格 -->
-        <ApplicationTable :total="store.total" :current-page="page" @edit="openEdit" @page-change="handlePageChange" />
+        <ApplicationTable @edit="openEdit" />
         <!-- 新建弹窗 -->
         <ApplicationFormDialog ref="createDialogRef" mode="create" :cascader-options="cascaderOptions"
-            @success="refresh" />
+            :category="category" :sub-type="subType" @success="refresh" />
         <!-- 修改弹窗 -->
         <ApplicationFormDialog ref="editDialogRef" mode="edit" :initial-data="editingRow"
-            :cascader-options="cascaderOptions" @success="refresh" />
+            :cascader-options="cascaderOptions" :category="category" :sub-type="subType" @success="refresh" />
     </div>
 </template>
 
@@ -58,14 +58,6 @@ const store = useApplicationStore()
 // ---------- 级联选项 ----------
 const cascaderOptions = computed(() => getCascaderOptions(category.value, subType.value))
 
-// ---------- 分页 ----------
-const page = ref(1)
-
-function handlePageChange(newPage) {
-    page.value = newPage
-    store.fetchApplicationsByCategory({ page: newPage })
-}
-
 // ---------- 弹窗控制 ----------
 const createDialogRef = ref(null)
 const editDialogRef = ref(null)
@@ -77,26 +69,21 @@ function openCreate() {
 
 function openEdit(row) {
     editingRow.value = row
-    editDialogRef.value?.open()
+    setTimeout(() => editDialogRef.value?.open(), 0)
 }
 
 // ---------- 刷新 ----------
 function refresh() {
-    page.value = 1
     store.fetchApplicationsByCategory()
 }
 
-// ---------- 路由参数变化时重新加载（同一组件复用场景） ----------
+// ---------- 路由参数变化时重新加载 ----------
 function initPage() {
-    page.value = 1
     store.setCategory(category.value, subType.value)
     store.fetchApplicationsByCategory()
 }
 
-// 首次进入
 onMounted(initPage)
-
-// 同一组件切换路由参数（如从"身心-基础"点击"身心-成果"）
 watch([category, subType], initPage)
 </script>
 

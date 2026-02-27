@@ -1,21 +1,30 @@
-import http from './http';
+import http from './http'
 
 const archiveService = {
-  createArchive(data) {
-    return http.post('/archives/exports', data);
-  },
+    /** 创建导出归档记录 */
+    createExport(payload) {
+        return http.post('/archives/exports', payload)
+    },
 
-  getArchiveList(queryParams) {
-    return http.get('/archives/exports', { params: queryParams });
-  },
+    /** 查询归档列表 */
+    getExports(params = {}) {
+        return http.get('/archives/exports', { params })
+    },
 
-  getArchiveDetail(archiveId) {
-    return http.get(`/archives/exports/${archiveId}`);
-  },
+    /** 归档文件下载 URL */
+    getDownloadUrl(archiveId) {
+        return `/api/v1/archives/exports/${archiveId}/download`
+    },
 
-  downloadArchive(archiveId) {
-    return http.get(`/archives/exports/${archiveId}/download`, { responseType: 'blob' });
-  }
-};
+    /** 发布公示 */
+    createAnnouncement(payload) {
+        return http.post('/announcements', payload)
+    },
 
-export default archiveService;
+    /** 获取公示列表 */
+    getAnnouncements(params = {}) {
+        return http.get('/announcements', { params })
+    },
+}
+
+export default archiveService

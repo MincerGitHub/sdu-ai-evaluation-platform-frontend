@@ -8,8 +8,8 @@ export const CATEGORY_TREE = [
         children: [
             {
                 id: 'basic', name: '基础性评价', maxScore: 9, children: [
-                    { id: 'basic', name: '体质测试', Score: 5, maxScore: 5 },
-                    { id: 'sports_activity', name: '体育类集体活动', Score: 2, maxScore: 2, maxcount: 2 },   //体育类集体活动参加一次积2分     
+                    { uid: 0, id: 'basic', name: '体质测试', Score: 5, maxScore: 5 },
+                    { uid: 1, id: 'sports_activity', name: '体育类集体活动', Score: 2, maxScore: 2, maxcount: 2 },
                 ],
             },
             {
@@ -18,62 +18,28 @@ export const CATEGORY_TREE = [
                         id: 'sports_competition', name: '体育竞赛', maxScore: 6, children: [
                             {
                                 id: 'personal_project', name: '个人项目', childhren: [
-                                    { id: 'national', name: '国家级', score: 6, maxscore: 6 },
+                                    { uid: 2, id: 'national', name: '国家级', score: 6, maxscore: 6 },
                                     {
                                         id: 'provincial', name: '省级', children: [
-                                            { id: 'first_place', name: '第一名', score: 6, maxScore: 6 },
-                                            { id: 'second_place', name: '第二名', score: 5.25, maxscore: 5.25 },
-                                            { id: 'third_place', name: '第三名', score: 4.5, maxScore: 4.5 },
-                                            { id: 'other_rankings', name: '其它名次', score: 3.75, maxScore: 3.75 },
+                                            { uid: 3, id: 'first_place', name: '第一名', score: 6, maxScore: 6 },
+                                            { uid: 4, id: 'second_place', name: '第二名', score: 5.25, maxscore: 5.25 },
+                                            { uid: 5, id: 'third_place', name: '第三名', score: 4.5, maxScore: 4.5 },
+                                            { uid: 6, id: 'other_rankings', name: '其它名次', score: 3.75, maxScore: 3.75 },
                                         ],
                                     },
-                                    {
-                                        id: 'university_level', name: '校级/校区级', children: [
-                                            { id: 'first_place', name: '第一名', score: 4.5, maxScore: 4.5 },
-                                            { id: 'second_place', name: '第二名', score: 3.75, maxscore: 3.75 },
-                                            { id: 'third_place', name: '第三名', score: 3, maxScore: 3 },
-                                            { id: 'other_rankings', name: '其它名次', score: 2.25, maxScore: 2.25 },
-                                        ],
-                                    },
-                                    {
-                                        id: 'department_level', name: '院级/书院级', children: [
-                                            { id: 'first_place', name: '第一名', score: 2.25, maxScore: 2.25 },
-                                            { id: 'second_place', name: '第二名', score: 1.5, maxscore: 1.5 },
-                                            { id: 'third_place', name: '第三名', score: 0.75, maxScore: 0.75 },
-                                            { id: 'other_rankings', name: '其它名次', score: 0.375, maxScore: 0.375 },
-                                        ],
-                                    },
-                                    { id: 'participated', name: '参与未获奖', score: 0.3, maxscore: 0.3 },
                                 ],
                             },
                             {
                                 id: 'group_project', name: '集体项目', childhren: [
-                                    { id: 'national', name: '国家级', score: 6, maxscore: 6 },
+                                    { uid: 7, id: 'national', name: '国家级', score: 6, maxscore: 6 },
                                     {
                                         id: 'provincial', name: '省级', children: [
-                                            { id: 'first_place', name: '第一名', score: 6, maxScore: 6 },
-                                            { id: 'second_place', name: '第二名', score: 5.25, maxscore: 5.25 },
-                                            { id: 'third_place', name: '第三名', score: 4.5, maxScore: 4.5 },
-                                            { id: 'other_rankings', name: '其它名次', score: 3.75, maxScore: 3.75 },
+                                            { uid: 8, id: 'first_place', name: '第一名', score: 6, maxScore: 6 },
+                                            { uid: 9, id: 'second_place', name: '第二名', score: 5.25, maxscore: 5.25 },
+                                            { uid: 10, id: 'third_place', name: '第三名', score: 4.5, maxScore: 4.5 },
+                                            { uid: 11, id: 'other_rankings', name: '其它名次', score: 3.75, maxScore: 3.75 },
                                         ],
                                     },
-                                    {
-                                        id: 'university_level', name: '校级/校区级', children: [
-                                            { id: 'first_place', name: '第一名', score: 5.25, maxScore: 5.25 },
-                                            { id: 'second_place', name: '第二名', score: 4.5, maxscore: 4.5 },
-                                            { id: 'third_place', name: '第三名', score: 3.75, maxScore: 3.75 },
-                                            { id: 'other_rankings', name: '其它名次', score: 3, maxScore: 3 },
-                                        ],
-                                    },
-                                    {
-                                        id: 'department_level', name: '院级/书院级', children: [
-                                            { id: 'first_place', name: '第一名', score: 3, maxScore: 3 },
-                                            { id: 'second_place', name: '第二名', score: 2.25, maxscore: 2.25 },
-                                            { id: 'third_place', name: '第三名', score: 1.5, maxScore: 1.5 },
-                                            { id: 'other_rankings', name: '其它名次', score: 0.75, maxScore: 0.75 },
-                                        ],
-                                    },
-                                    { id: 'participated', name: '参与未获奖', score: 0.3, maxscore: 0.3 },
                                 ],
                             },
                         ],
@@ -111,25 +77,31 @@ export const CATEGORY_TREE = [
     },
 ]
 
+import scoreMap from './award_uid_score_map.json'
+
+/**
+ * 将树节点转为 cascader option
+ * 叶子节点（有 uid）的 value 设为 uid（数字），非叶子节点 value 设为 id（字符串）
+ */
 function toCascaderOption(node) {
-    const option = {
-        value: node.id,
-        label: node.name + (node.score != null ? `（${node.score}分）` : node.maxScore != null ? `（上限${node.maxScore}分）` : ''),
-        // 没有 children 才可选
-        disabled: !!(node.children || node.childhren),
-    }
+    const isLeaf = node.uid != null
     const kids = node.children || node.childhren
-    if (kids && kids.length > 0) {
+
+    const option = {
+        value: isLeaf ? node.uid : node.id,
+        label: node.name,
+        leaf: isLeaf,
+    }
+
+    if (!isLeaf && kids && kids.length > 0) {
         option.children = kids.map(toCascaderOption)
     }
+
     return option
 }
 
 /**
  * 按 categoryId + subId 从 CATEGORY_TREE 中提取对应子树的 cascader options
- * @param {string} categoryId  e.g. 'physical_mental'
- * @param {string} subId       e.g. 'basic' | 'achievement'
- * @returns {Array} cascader options
  */
 export function getCascaderOptions(categoryId, subId) {
     const category = CATEGORY_TREE.find(c => c.id === categoryId)
@@ -140,11 +112,48 @@ export function getCascaderOptions(categoryId, subId) {
 }
 
 /**
+ * 根据 uid 从 scoreMap 获取分数信息
+ * @param {number|string} uid
+ * @returns {{ score: number|string, maxScore: number|string } | null}
+ */
+export function getScoreInfoByUid(uid) {
+    return scoreMap[String(uid)] ?? null
+}
+
+/**
+ * 在子树中递归查找包含指定 uid 的叶子节点，返回从根到叶子的 value 路径
+ * 用于编辑回显时，根据后端返回的 award_uid 还原 cascader 选中路径
+ */
+export function findCascaderPathByUid(categoryId, subId, targetUid) {
+    const category = CATEGORY_TREE.find(c => c.id === categoryId)
+    if (!category) return []
+    const sub = category.children?.find(s => s.id === subId)
+    if (!sub || !sub.children) return []
+
+    function dfs(nodes, path) {
+        for (const node of nodes) {
+            const isLeaf = node.uid != null
+            const currentVal = isLeaf ? node.uid : node.id
+            const newPath = [...path, currentVal]
+
+            if (isLeaf && node.uid === targetUid) {
+                return newPath
+            }
+
+            const kids = node.children || node.childhren
+            if (kids && kids.length > 0) {
+                const result = dfs(kids, newPath)
+                if (result) return result
+            }
+        }
+        return null
+    }
+
+    return dfs(sub.children, []) || []
+}
+
+/**
  * 根据 cascader 选中路径数组，找到对应叶子节点的 score
- * @param {string} categoryId
- * @param {string} subId
- * @param {string[]} valuePath  cascader v-model 的值数组
- * @returns {number|null}
  */
 export function getScoreByPath(categoryId, subId, valuePath) {
     const category = CATEGORY_TREE.find(c => c.id === categoryId)
@@ -154,8 +163,9 @@ export function getScoreByPath(categoryId, subId, valuePath) {
 
     let nodes = sub.children || []
     let node = null
-    for (const id of valuePath) {
-        node = nodes.find(n => n.id === id)
+    for (const val of valuePath) {
+        // val 可能是 uid(number) 或 id(string)
+        node = nodes.find(n => (n.uid != null ? n.uid : n.id) === val)
         if (!node) return null
         nodes = node.children || node.childhren || []
     }

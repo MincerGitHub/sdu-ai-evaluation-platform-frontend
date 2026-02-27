@@ -1,6 +1,7 @@
 {
   "name": "sdu-ai-evaluation-platform-frontend",
   "version": "0.0.0",
+  "type": "module",
   "description": "山东大学计算机科学与技术学院AI综测评分系统-前端",
   "scripts": {
     "dev": "vite",
@@ -8,7 +9,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.13.5",
     "element-plus": "^2.13.2",
     "pinia": "^2.0.0",
     "vue": "^3.5.28",
@@ -18,6 +19,8 @@
     "@vitejs/plugin-vue": "^6.0.0",
     "eslint": "^7.0.0",
     "eslint-plugin-vue": "^7.0.0",
-    "vite": "^6.0.0"
+    "mockjs": "^1.1.0",
+    "vite": "^6.0.0",
+    "vite-plugin-mock": "^3.0.2"
   }
 }

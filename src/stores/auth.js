@@ -47,6 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function login({ account, password }) {
+        // 登录前先清除旧 token，避免请求携带过期凭证
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        accessToken.value = ''
+        refreshToken.value = ''
+
         const res = await authService.login(account, password)
         const data = res.data
         setUser(data.user)

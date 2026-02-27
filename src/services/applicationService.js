@@ -1,45 +1,40 @@
-import http from './http';
+import http from './http'
 
 const applicationService = {
-  // 创建申报
-  createApplication(applicationData) {
-    return http.post('/applications', applicationData);
-  },
+    /** 创建申报 */
+    create(payload) {
+        return http.post('/applications', payload)
+    },
 
-  // 获取我的申报列表
-  getMyApplications(params) {
-    return http.get('/applications/my', { params });
-  },
+    /** 分类汇总 */
+    getCategorySummary(params = {}) {
+        return http.get('/applications/my/category-summary', { params })
+    },
 
-  // 获取申报详情
-  getApplicationDetail(applicationId) {
-    return http.get(`/applications/${applicationId}`);
-  },
+    /** 分类明细 */
+    getByCategory(params = {}) {
+        return http.get('/applications/my/by-category', { params })
+    },
 
-  // 编辑申报
-  updateApplication(applicationId, applicationData) {
-    return http.put(`/applications/${applicationId}`, applicationData);
-  },
+    /** 申报详情 */
+    getDetail(applicationId) {
+        return http.get(`/applications/${applicationId}`)
+    },
 
-  // 删除申报
-  deleteApplication(applicationId) {
-    return http.delete(`/applications/${applicationId}`);
-  },
+    /** 更新申报 */
+    update(applicationId, payload) {
+        return http.put(`/applications/${applicationId}`, payload)
+    },
 
-  // 获取综测分类字典
-  getCategories() {
-    return http.get('/applications/categories');
-  },
+    /** 撤回申报 */
+    withdraw(applicationId) {
+        return http.post(`/applications/${applicationId}/withdraw`)
+    },
 
-  // 获取按分类的汇总
-  getCategorySummary(term) {
-    return http.get('/applications/my/category-summary', { params: { term } });
-  },
+    /** 删除申报（软删） */
+    remove(applicationId) {
+        return http.delete(`/applications/${applicationId}`)
+    },
+}
 
-  // 按分类获取申报明细
-  getApplicationsByCategory(params) {
-    return http.get('/applications/my/by-category', { params });
-  },
-};
-
-export default applicationService;
+export default applicationService

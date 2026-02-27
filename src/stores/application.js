@@ -20,19 +20,21 @@ export const useApplicationStore = defineStore('application', () => {
     }
 
     // ---- 查询 ----
-    const fetchApplicationsByCategory = async (params = {}) => {
+    const fetchApplicationsByCategory = async () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await applicationService.getApplicationsByCategory({
+            const response = await applicationService.getByCategory({
                 category: currentCategory.value,
                 sub_type: currentSubType.value,
-                ...params,
             });
-            applications.value = response.data?.data?.list ?? [];
-            total.value = response.data?.data?.total ?? applications.value.length;
+            const resData = response.data ?? {}; // resData适配 http.js 对原始 axios 的解包
+            applications.value = resData.list ?? [];
+            total.value = resData.total ?? applications.value.length;
+            console.log('[store] fetched applications:', applications.value, 'total:', total.value);
         } catch (err) {
             error.value = err.message || '获取申报列表失败';
+            console.error('[store] fetchApplicationsByCategory error:', err);
         } finally {
             loading.value = false;
         }
@@ -44,14 +46,19 @@ export const useApplicationStore = defineStore('application', () => {
         error.value = null;
         try {
             const payload = {
-                ...formData,
+                award_uid: formData.award_uid,
+                title: formData.title,
+                description: formData.description,
+                occurred_at: formData.occurred_at,
+                input_score: formData.input_score,
+                attachments: formData.attachments ?? [],
                 category: currentCategory.value,
                 sub_type: currentSubType.value,
             };
-            const response = await applicationService.createApplication(payload);
-            // 创建成功后刷新列表
+            const response = await applicationService.create(payload);
             await fetchApplicationsByCategory();
-            return { success: true, data: response.data?.data };
+            const resData = response.data ?? {};
+            return { success: true, data: resData };
         } catch (err) {
             error.value = err.message || '创建申报失败';
             return { success: false, error: error.value };
@@ -66,13 +73,20 @@ export const useApplicationStore = defineStore('application', () => {
         error.value = null;
         try {
             const payload = {
-                ...formData,
+                award_uid: formData.award_uid,
+                title: formData.title,
+                description: formData.description,
+                occurred_at: formData.occurred_at,
+                input_score: formData.input_score,
+                attachments: formData.attachments ?? [],
                 category: currentCategory.value,
                 sub_type: currentSubType.value,
+                // version: formData.version, // version做不完了，不做了先
             };
-            const response = await applicationService.updateApplication(applicationId, payload);
+            const response = await applicationService.update(applicationId, payload);
             await fetchApplicationsByCategory();
-            return { success: true, data: response.data?.data };
+            const resData = response.data ?? {};
+            return { success: true, data: resData };
         } catch (err) {
             error.value = err.message || '更新申报失败';
             return { success: false, error: error.value };
@@ -86,8 +100,9 @@ export const useApplicationStore = defineStore('application', () => {
         loading.value = true;
         error.value = null;
         try {
-            await applicationService.deleteApplication(applicationId);
-            applications.value = applications.value.filter(app => app.id !== applicationId);
+            await applicationService.remove(applicationId);
+            applications.value = applications.value.filter(app => app.application_id !== applicationId);
+            total.value = Math.max(0, total.value - 1);
             return { success: true };
         } catch (err) {
             error.value = err.message || '删除申报失败';

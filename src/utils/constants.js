@@ -1,5 +1,3 @@
-const API_BASE_URL = '/api/v1';
-
 const ROLES = {
     STUDENT: 'student',
     TEACHER: 'teacher',
@@ -8,7 +6,6 @@ const ROLES = {
 
 const APPLICATION_STATUSES = {
     PENDING_AI: 'pending_ai',
-    AI_ABNORMAL: 'ai_abnormal',
     PENDING_REVIEW: 'pending_review',
     APPROVED: 'approved',
     REJECTED: 'rejected',
@@ -32,7 +29,6 @@ const ERROR_CODES = {
 };
 
 export {
-    API_BASE_URL,
     ROLES,
     APPLICATION_STATUSES,
     ERROR_CODES,

@@ -1,17 +1,15 @@
-import http from './http';
+import http from './http'
 
 const notificationService = {
-  sendRejectionEmail(applicationId, to, reason) {
-    return http.post('/notifications/reject-email', {
-      application_id: applicationId,
-      to: to,
-      reason: reason,
-    });
-  },
+    /** 发送驳回通知 */
+    sendRejectEmail(payload) {
+        return http.post('/notifications/reject-email', payload)
+    },
 
-  getEmailLogs(params) {
-    return http.get('/notifications/email-logs', { params });
-  },
-};
+    /** 查询邮件日志 */
+    getEmailLogs(params = {}) {
+        return http.get('/notifications/email-logs', { params })
+    },
+}
 
-export default notificationService;
+export default notificationService

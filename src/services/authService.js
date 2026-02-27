@@ -1,25 +1,29 @@
 import http from './http'
 
 const authService = {
-  login(account, password) {
-    return http.post('/auth/login', { account, password })
-  },
+    register(payload) {
+        return http.post('/auth/register', payload)
+    },
 
-  refreshToken(refreshToken) {
-    return http.post('/auth/refresh', { refresh_token: refreshToken })
-  },
+    login(account, password) {
+        return http.post('/auth/login', { account, password })
+    },
 
-  logout(refreshToken) {
-    return http.post('/auth/logout', { refresh_token: refreshToken })
-  },
+    refreshToken(refreshToken) {
+        return http.post('/auth/refresh', { refresh_token: refreshToken })
+    },
 
-  getCurrentUser() {
-    return http.get('/users/me')
-  },
+    logout(refreshToken) {
+        return http.post('/auth/logout', { refresh_token: refreshToken })
+    },
 
-  updateUserInfo(userInfo) {
-    return http.put('/users/me', userInfo)
-  },
+    getCurrentUser() {
+        return http.get('/users/me')
+    },
+
+    updateUserInfo(userInfo) {
+        return http.put('/users/me', userInfo)
+    },
 }
 
 export default authService

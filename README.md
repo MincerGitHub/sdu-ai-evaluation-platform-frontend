@@ -120,8 +120,6 @@ node版本：v20.19.1
   - 接口：`POST /reviews/{application_id}/decision`
   - 字段：
     - `decision`: `approved` / `rejected`
-    - `comment`: 处理意见
-    - `reason_code` / `reason_text`: 驳回原因（仅驳回时必填）
 
 ---
 

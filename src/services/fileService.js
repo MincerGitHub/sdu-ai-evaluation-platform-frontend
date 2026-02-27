@@ -1,29 +1,24 @@
-import http from './http';
+import http from './http'
 
 const fileService = {
-  uploadFile(file, category) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('category', category);
+    /** 上传文件（multipart/form-data） */
+    upload(file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        return http.post('/files/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
 
-    return http.post('/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
+    /** 获取文件 URL（拼接即可，实际为文件流） */
+    getFileUrl(fileId) {
+        return `/api/v1/files/${fileId}`
+    },
 
-  getFileUrl(fileId) {
-    return http.get(`/files/${fileId}/url`);
-  },
+    /** 获取文件信息 */
+    getFile(fileId) {
+        return http.get(`/files/${fileId}`)
+    },
+}
 
-  deleteFile(fileId) {
-    return http.delete(`/files/${fileId}`);
-  },
-
-  getFileList(queryParams) {
-    return http.get('/files', { params: queryParams });
-  },
-};
-
-export default fileService;
+export default fileService

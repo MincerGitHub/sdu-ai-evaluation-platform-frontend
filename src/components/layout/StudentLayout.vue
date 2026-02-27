@@ -1,7 +1,6 @@
 <template>
   <el-container class="layout">
     <el-header class="layout-header">
-      <!-- header -->
       <div class="header-left">
         <img src="@/assets/logo.jpg" alt="山东大学综测评分" height="100%" />
       </div>

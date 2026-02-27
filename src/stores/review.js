@@ -48,11 +48,11 @@ export const useReviewStore = defineStore('review', () => {
         }
     };
 
-    const submitReviewDecision = async (applicationId, decision, comment) => {
+    const submitReviewDecision = async (applicationId, decision) => {
         loading.value = true;
         error.value = null;
         try {
-            await reviewService.submitReviewDecision(applicationId, decision, comment);
+            await reviewService.submitReviewDecision(applicationId, decision);
             await fetchPendingReviews(); // Refresh pending reviews after submission
         } catch (err) {
             error.value = err.message || 'Failed to submit review decision';
