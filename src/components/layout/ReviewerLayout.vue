@@ -112,9 +112,9 @@ const toggleViewMode = async () => {
   }
 }
 
-const handleLogout = async () => {
-  await authStore.logout()
+const handleLogout = () => {
   router.push({ name: 'Login' })
+  authStore.logout()
 }
 
 </script>

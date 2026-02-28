@@ -1,10 +1,5 @@
 import { success, fail, paginate, now } from './utils.js'
-
-const tokens = [
-    { id: 1, token: 'rvw_a1b2c3d4e5f6g7h8', type: 'reviewer', class_ids: [301, 302, 303], status: 'active', expired_at: '2026-03-01T23:59:59+00:00', created_at: '2026-02-24T03:00:00+00:00', activated_at: '2026-02-24T03:10:23.325193+00:00', activated_user_id: 2 },
-]
-
-let tokenIdSeq = 10
+import { reviewerTokens, seq } from './mockData.js'
 
 export default [
     {
@@ -13,9 +8,9 @@ export default [
         response({ body }) {
             const { class_ids, expired_at } = body || {}
             if (!class_ids || !class_ids.length) return fail(1001, '参数校验失败', { reason: 'class_ids 不能为空' })
-            const id = ++tokenIdSeq
+            const id = ++seq.token
             const t = { id, token: `rvw_${id}_${Date.now().toString(36)}`, type: 'reviewer', class_ids, status: 'pending', expired_at: expired_at || '2026-12-31T23:59:59+00:00', created_at: now(), activated_at: null, activated_user_id: null }
-            tokens.push(t)
+            reviewerTokens.push(t)
             return success({ token_id: t.id, token: t.token, type: t.type, class_ids: t.class_ids, expired_at: t.expired_at }, '创建成功')
         },
     },
@@ -24,7 +19,7 @@ export default [
         method: 'post',
         response({ body }) {
             const { token } = body || {}
-            const t = tokens.find((tk) => tk.token === token)
+            const t = reviewerTokens.find((tk) => tk.token === token)
             if (!t) return fail(1002, '令牌不存在')
             if (t.status === 'active') return fail(1007, '令牌已被激活')
             if (t.status === 'revoked') return fail(1000, '令牌已失效')
@@ -37,7 +32,7 @@ export default [
         method: 'get',
         response({ query }) {
             const { type, status, page, size } = query || {}
-            let list = [...tokens]
+            let list = [...reviewerTokens]
             if (type) list = list.filter((t) => t.type === type)
             if (status) list = list.filter((t) => t.status === status)
             return success(paginate(list, page, size), '获取成功')
@@ -46,9 +41,11 @@ export default [
     {
         url: '/api/v1/tokens/:token_id/revoke',
         method: 'post',
-        response({ params }) {
-            const id = Number(params.token_id)
-            const t = tokens.find((tk) => tk.id === id)
+        response({ params, query }) {
+            // vite-plugin-mock 在不同场景下动态路由参数注入位置不一致，这里做兼容处理
+            const id = Number(params?.token_id ?? query?.token_id)
+            if (!Number.isFinite(id)) return fail(1001, '参数校验失败', { reason: 'token_id 无效' })
+            const t = reviewerTokens.find((tk) => tk.id === id)
             if (!t) return fail(1002, '令牌不存在')
             t.status = 'revoked'
             return success({}, '失效成功')

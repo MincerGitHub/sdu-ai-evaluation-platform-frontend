@@ -7,17 +7,14 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item index="appeals">
-            申诉
-          </el-menu-item>
-          <el-menu-item index="announcements">
+          <el-menu-item index="/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="user">
+            <el-menu-item index="/admin/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -30,50 +27,18 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" router>
-          <!-- 身心素养 -->
-          <el-sub-menu index="physical-mental">
-            <template #title>身心素养（上限15分）</template>
-            <el-menu-item index="physical-mental-basic">
-              基础性评价（上限9分）
-            </el-menu-item>
-            <el-menu-item index="physical-mental-achievement">
-              成果性评价（上限6分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 文艺素养 -->
-          <el-sub-menu index="art">
-            <template #title>文艺素养（上限15分）</template>
-            <el-menu-item index="art-basic">
-              基础性评价（上限9分）
-            </el-menu-item>
-            <el-menu-item index="art-achievement">
-              成果性评价（上限6分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 劳动素养 -->
-          <el-sub-menu index="labor">
-            <template #title>劳动素养（上限25分）</template>
-            <el-menu-item index="labor-basic">
-              基础性评价（上限15分）
-            </el-menu-item>
-            <el-menu-item index="labor-achievement">
-              成果性评价（上限10分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 创新素养 -->
-          <el-sub-menu index="innovation">
-            <template #title>创新素养（上限45分）</template>
-            <el-menu-item index="innovation-basic">
-              基础素养（上限5分）
-            </el-menu-item>
-            <el-menu-item index="innovation-achievement">
-              突破提升（上限40分）
-            </el-menu-item>
-          </el-sub-menu>
-
+          <el-menu-item index="/admin/dashboard">
+            管理员首页
+          </el-menu-item>
+          <el-menu-item index="/system/config">
+            系统配置
+          </el-menu-item>
+          <el-menu-item index="/system/logs">
+            系统日志
+          </el-menu-item>
+          <el-menu-item index="/system/award-dicts">
+            奖项字典
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
@@ -85,18 +50,20 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const user = computed(() => authStore.user)
+const activeMenu = computed(() => route.path)
 
-const handleLogout = async () => {
-  await authStore.logout()
+const handleLogout = () => {
   router.push({ name: 'Login' })
+  authStore.logout()
 }
 
 </script>

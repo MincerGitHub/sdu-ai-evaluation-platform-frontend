@@ -313,7 +313,7 @@ export const applications = [
         user_id: 3,
         category: 'innovation',
         sub_type: 'basic',
-        award_uid: 317,
+        award_uid: 316,
         title: '互联网+省赛金奖',
         description: '省级赛事金奖',
         occurred_at: '2026-02-20',

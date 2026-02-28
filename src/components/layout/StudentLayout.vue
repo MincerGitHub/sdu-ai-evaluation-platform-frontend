@@ -12,14 +12,14 @@
           <el-menu-item index="appeals">
             申诉
           </el-menu-item>
-          <el-menu-item index="announcements">
+          <el-menu-item index="/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="user">
+            <el-menu-item index="/student/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -86,15 +86,17 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const user = computed(() => authStore.user)
 const canUseReviewerView = computed(() => authStore.canUseReviewerView)
 const isInReviewerView = computed(() => authStore.isInReviewerView)
+const activeMenu = computed(() => route.path)
 
 const toggleViewMode = async () => {
   if (!canUseReviewerView.value) return
@@ -110,9 +112,9 @@ const toggleViewMode = async () => {
   }
 }
 
-const handleLogout = async () => {
-  await authStore.logout()
+const handleLogout = () => {
   router.push({ name: 'Login' })
+  authStore.logout()
 }
 
 </script>

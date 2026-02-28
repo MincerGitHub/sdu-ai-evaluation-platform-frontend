@@ -1,6 +1,16 @@
 import { success, fail } from './utils.js'
 import { users } from './mockData.js'
 
+function getUserByAuthHeader(headers = {}) {
+    const authorization = headers.authorization || headers.Authorization || ''
+    if (!authorization.startsWith('Bearer ')) return null
+    const token = authorization.slice(7)
+    const match = token.match(/^mock_access_(\d+)_/)
+    if (!match) return null
+    const userId = Number(match[1])
+    return users.find((u) => u.id === userId) || null
+}
+
 export default [
     // 登录
     {
@@ -48,7 +58,10 @@ export default [
         response({ body }) {
             const { refresh_token } = body || {}
             if (!refresh_token) return fail(1006, 'refresh token 无效')
-            return success({ access_token: `mock_access_refreshed_${Date.now()}`, expires_in: 7200 })
+            const match = refresh_token.match(/^mock_refresh_(\d+)_/)
+            if (!match) return fail(1006, 'refresh token 无效')
+            const userId = Number(match[1])
+            return success({ access_token: `mock_access_${userId}_${Date.now()}`, expires_in: 7200 })
         },
     },
     // 退出登录
@@ -57,6 +70,49 @@ export default [
         method: 'post',
         response() {
             return success({}, '退出成功')
+        },
+    },
+    // 获取当前用户
+    {
+        url: '/api/v1/users/me',
+        method: 'get',
+        response({ headers }) {
+            const user = getUserByAuthHeader(headers)
+            if (!user) return fail(1004, '未登录或 token 缺失')
+            return success({
+                id: user.id,
+                account: user.account,
+                name: user.name,
+                role: user.role,
+                class_id: user.class_id,
+                is_reviewer: user.is_reviewer,
+                email: user.email,
+                phone: user.phone,
+            }, '获取成功')
+        },
+    },
+    // 更新当前用户
+    {
+        url: '/api/v1/users/me',
+        method: 'put',
+        response({ headers, body }) {
+            const user = getUserByAuthHeader(headers)
+            if (!user) return fail(1004, '未登录或 token 缺失')
+
+            const { email, phone } = body || {}
+            if (email !== undefined) user.email = email
+            if (phone !== undefined) user.phone = phone
+
+            return success({
+                id: user.id,
+                account: user.account,
+                name: user.name,
+                role: user.role,
+                class_id: user.class_id,
+                is_reviewer: user.is_reviewer,
+                email: user.email,
+                phone: user.phone,
+            }, '更新成功')
         },
     },
 ]

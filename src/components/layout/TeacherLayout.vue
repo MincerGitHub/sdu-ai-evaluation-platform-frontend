@@ -9,14 +9,14 @@
           <el-menu-item index="appeals">
             申诉
           </el-menu-item>
-          <el-menu-item index="announcements">
+          <el-menu-item index="/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="user">
+            <el-menu-item index="/teacher/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -29,6 +29,9 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" :default-active="activeMenu" router>
+          <el-menu-item index="/teacher/dashboard">
+            教师首页
+          </el-menu-item>
           <!-- 身心素养 -->
           <el-sub-menu index="physical_mental">
             <template #title>身心素养（上限15分）</template>
@@ -72,6 +75,9 @@
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/teacher/tokens">
+            令牌管理
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
@@ -83,17 +89,19 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const user = computed(() => authStore.user)
+const activeMenu = computed(() => route.path)
 
-const handleLogout = async () => {
-  await authStore.logout()
+const handleLogout = () => {
   router.push({ name: 'Login' })
+  authStore.logout()
 }
 
 </script>
