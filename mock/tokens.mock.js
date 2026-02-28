@@ -2,6 +2,7 @@ import { success, fail, paginate, now } from './utils.js'
 
 const tokens = [
     { id: 1, token: 'rvw_a1b2c3d4e5f6g7h8', type: 'reviewer', class_ids: [301, 302, 303], status: 'active', expired_at: '2026-03-01T23:59:59+00:00', created_at: '2026-02-24T03:00:00+00:00', activated_at: '2026-02-24T03:10:23.325193+00:00', activated_user_id: 2 },
+    { id: 2, token: 'rvw_demo_pending_token', type: 'reviewer', class_ids: [301], status: 'pending', expired_at: '2026-12-31T23:59:59+00:00', created_at: '2026-02-27T03:00:00+00:00', activated_at: null, activated_user_id: null },
 ]
 
 let tokenIdSeq = 10
@@ -46,8 +47,10 @@ export default [
     {
         url: '/api/v1/tokens/:token_id/revoke',
         method: 'post',
-        response({ params }) {
-            const id = Number(params.token_id)
+        response({ params, query }) {
+            // vite-plugin-mock 在不同场景下动态路由参数注入位置不一致，这里做兼容处理
+            const id = Number(params?.token_id ?? query?.token_id)
+            if (!Number.isFinite(id)) return fail(1001, '参数校验失败', { reason: 'token_id 无效' })
             const t = tokens.find((tk) => tk.id === id)
             if (!t) return fail(1002, '令牌不存在')
             t.status = 'revoked'

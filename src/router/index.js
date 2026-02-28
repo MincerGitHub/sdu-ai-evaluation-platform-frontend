@@ -30,6 +30,11 @@ const router = createRouter({
           name: 'StudentApplication',
           component: () => import('@/views/application/StudentApplicationPage.vue'),
         },
+        {
+          path: 'profile',
+          name: 'StudentProfile',
+          component: () => import('@/views/student/StudentProfilePage.vue'),
+        },
         // ...else
       ],
     },
@@ -60,7 +65,36 @@ const router = createRouter({
           name: 'TeacherDashboard',
           component: () => import('@/views/dashboard/TeacherDashboard.vue'),
         },
+        {
+          path: 'profile',
+          name: 'TeacherProfile',
+          component: () => import('@/views/teacher/TeacherProfilePage.vue'),
+        },
+        {
+          path: 'tokens',
+          name: 'TokenManagement',
+          component: () => import('@/views/teacher/TokenManagementPage.vue'),
+        },
         // ...else
+      ],
+    },
+
+    // 管理员端
+    {
+      path: '/admin',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { role: ROLES.ADMIN },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'AdminDashboard',
+          component: () => import('@/views/dashboard/AdminDashboard.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'AdminProfile',
+          component: () => import('@/views/admin/AdminProfilePage.vue'),
+        },
       ],
     },
 
@@ -106,11 +140,21 @@ const router = createRouter({
 })
 
 // role guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
 
   if (!to.meta.public && !auth.isAuthenticated) {
     return next({ name: 'Login' })
+  }
+
+  // 刷新页面后若仅恢复了 token，先拉取当前用户，避免 role 判定误拦截到 forbidden
+  if (!to.meta.public && auth.isAuthenticated && !auth.user) {
+    try {
+      await auth.fetchCurrentUser()
+    } catch {
+      await auth.logout()
+      return next({ name: 'Login' })
+    }
   }
 
   // 基础角色校验
@@ -127,8 +171,9 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-
-
+  if (to.meta.requiresReviewer && !auth.isReviewer) {
+    return next({ name: 'Forbidden' })
+  }
   next()
 })
 

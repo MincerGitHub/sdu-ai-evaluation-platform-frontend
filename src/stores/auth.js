@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import authService from '@/services/authService'
+import tokenService from '@/services/tokenService'
 import { ROLES } from '@/utils/constants'
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref(null)
+    const user = ref(readStoredUser())
     const accessToken = ref(localStorage.getItem('access_token') || '')
     const refreshToken = ref(localStorage.getItem('refresh_token') || '')
 
@@ -21,6 +22,17 @@ export const useAuthStore = defineStore('auth', () => {
     const isReviewer = computed(() => !!user.value?.is_reviewer)
     const isInReviewerView = computed(() => isStudent.value && isReviewer.value && viewMode.value === 'reviewer')
     const canUseReviewerView = computed(() => isStudent.value && isReviewer.value)
+
+    function readStoredUser() {
+        try {
+            const raw = localStorage.getItem('auth_user')
+            if (!raw) return null
+            return JSON.parse(raw)
+        } catch {
+            localStorage.removeItem('auth_user')
+            return null
+        }
+    }
 
     function setTokens(at, rt) {
         accessToken.value = at || ''
@@ -39,6 +51,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     function setUser(u) {
         user.value = u
+        if (u) {
+            localStorage.setItem('auth_user', JSON.stringify(u))
+        } else {
+            localStorage.removeItem('auth_user')
+        }
     }
 
     function setViewMode(mode) {
@@ -50,8 +67,10 @@ export const useAuthStore = defineStore('auth', () => {
         // 登录前先清除旧 token，避免请求携带过期凭证
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
+        localStorage.removeItem('auth_user')
         accessToken.value = ''
         refreshToken.value = ''
+        user.value = null
 
         const res = await authService.login(account, password)
         const data = res.data
@@ -105,6 +124,28 @@ export const useAuthStore = defineStore('auth', () => {
         return res.data
     }
 
+    async function updateProfile(profilePayload) {
+        const res = await authService.updateUserInfo(profilePayload)
+        const latestUser = {
+            ...(user.value || {}),
+            ...(res.data || {}),
+        }
+        setUser(latestUser)
+        return latestUser
+    }
+
+    async function bindReviewerToken(token) {
+        const res = await tokenService.activateReviewerToken(token)
+        const data = res.data || {}
+        const latestUser = {
+            ...(user.value || {}),
+            is_reviewer: true,
+            reviewer_token_id: data.reviewer_token_id || data.token_id || user.value?.reviewer_token_id || null,
+        }
+        setUser(latestUser)
+        return data
+    }
+
     return {
         user,
         accessToken,
@@ -122,6 +163,8 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         refreshAccessToken,
         fetchCurrentUser,
+        updateProfile,
+        bindReviewerToken,
         setViewMode,
     }
 })
