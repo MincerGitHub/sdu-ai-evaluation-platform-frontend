@@ -14,10 +14,10 @@
                     placeholder="请选择申报项目" @change="handleAwardChange" />
             </el-form-item>
 
-            <!-- 输入分数 -->
-            <el-form-item label="输入分数" prop="input_score">
+            <!-- 分数 -->
+            <el-form-item label="分数" prop="score">
                 <div style="width: 100%">
-                    <el-input-number v-model="form.input_score" :min="0"
+                    <el-input-number v-model="form.score" :min="0"
                         :max="typeof currentMaxScore === 'number' ? currentMaxScore : 99" :precision="2" :step="0.5"
                         placeholder="请输入分数" controls-position="right" style="width: 100%" />
                     <div class="score-hint" v-if="currentScoreInfo">
@@ -61,7 +61,7 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApplicationStore } from '@/stores/application'
-import { getScoreInfoByUid, findCascaderPathByUid } from '@/utils/award-dicts'
+import { getScoreInfoByUid, findCascaderPathByUid } from '@/utils/dealAwardUid'
 import fileService from '@/services/fileService'
 
 // ---------- Props ----------
@@ -109,7 +109,7 @@ async function open() {
         form.title = d.title ?? ''
         form.description = d.description ?? ''
         form.occurred_at = d.occurred_at ?? ''
-        form.input_score = d.input_score ?? null
+        form.score = d.score ?? null
         // form.version = d.version ?? 0 // version做不完了，不做了先
 
         // 根据 award_uid 反查 cascader 路径
@@ -172,7 +172,7 @@ const defaultForm = () => ({
     description: '',
     occurred_at: '',
     award_path: [],
-    input_score: null,
+    score: null,
     // version: 0,
 })
 
@@ -181,7 +181,7 @@ const form = reactive(defaultForm())
 const rules = {
     title: [{ required: true, message: '请输入申报名称', trigger: 'blur' }],
     award_path: [{ required: true, message: '请选择申报项目', trigger: 'change' }],
-    input_score: [{ required: true, message: '请输入分数', trigger: 'blur' }],
+    score: [{ required: true, message: '请输入分数', trigger: 'blur' }],
 }
 
 // ---------- 项目选择 & 分数联动 ----------
@@ -198,7 +198,7 @@ function handleAwardChange(val) {
     if (!val || val.length === 0) {
         selectedUid.value = null
         currentScoreInfo.value = null
-        form.input_score = null
+        form.score = null
         return
     }
     const leafVal = val[val.length - 1]
@@ -207,9 +207,9 @@ function handleAwardChange(val) {
     currentScoreInfo.value = info
 
     if (info && typeof info.score === 'number' && typeof info.maxScore === 'number' && info.score === info.maxScore) {
-        form.input_score = info.score
+        form.score = info.score
     } else {
-        form.input_score = null
+        form.score = null
     }
 }
 
@@ -270,7 +270,7 @@ async function handleSubmit() {
                 title: form.title,
                 description: form.description,
                 occurred_at: form.occurred_at,
-                input_score: form.input_score,
+                score: form.score,
                 attachments,
             }
 

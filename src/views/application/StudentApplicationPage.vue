@@ -20,7 +20,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useApplicationStore } from '@/stores/application'
-import { getCascaderOptions } from '@/utils/award-dicts'
+import { getCascaderOptions } from '@/utils/dealAwardUid'
 import ApplicationTable from '@/components/application/ApplicationTable.vue'
 import ApplicationFormDialog from '@/components/application/ApplicationFormDialog.vue'
 
@@ -44,8 +44,8 @@ const TITLE_MAP = {
         achievement: '劳动素养 · 成果性评价 · 申报',
     },
     innovation: {
-        foundation: '创新素养 · 基础素养 · 申报',
-        breakthrough: '创新素养 · 突破提升 · 申报',
+        basic: '创新素养 · 基础素养 · 申报',
+        achievement: '创新素养 · 突破提升 · 申报',
     },
 }
 const pageTitle = computed(

@@ -45,6 +45,11 @@ const router = createRouter({
           name: 'ReviewerDashboard',
           component: () => import('@/views/dashboard/ReviewerDashboard.vue'),
         },
+        {
+          path: 'application/:category/:subType',
+          name: 'ReviewerApplication',
+          component: () => import('@/views/application/ReviewApplicationPage.vue'),
+        },
         // ...else
       ],
     },
@@ -59,6 +64,11 @@ const router = createRouter({
           path: 'dashboard',
           name: 'TeacherDashboard',
           component: () => import('@/views/dashboard/TeacherDashboard.vue'),
+        },
+        {
+          path: 'application/:category/:subType',
+          name: 'TeacherApplication',
+          component: () => import('@/views/application/ReviewApplicationPage.vue'),
         },
         // ...else
       ],

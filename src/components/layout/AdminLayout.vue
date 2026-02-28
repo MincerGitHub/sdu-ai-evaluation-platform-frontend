@@ -69,7 +69,7 @@
             <el-menu-item index="innovation-basic">
               基础素养（上限5分）
             </el-menu-item>
-            <el-menu-item index="innovation-breakthrough">
+            <el-menu-item index="innovation-achievement">
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>

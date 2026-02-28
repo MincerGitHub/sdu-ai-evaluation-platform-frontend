@@ -12,9 +12,8 @@ const reports = {
             { rule_code: 'R_COMPETITION_LEVEL', rule_name: '竞赛级别', score: 4.0 },
             { rule_code: 'R_MATERIAL_COMPLETENESS', rule_name: '材料完整度', score: 2.0 },
         ],
-        input_score: 6.0,
+        score: 6.0,
         total_score: 26.5,
-        score_rule_version: 'v2026.02',
         audited_at: '2026-02-21T10:03:30Z',
     },
     14: {
@@ -28,9 +27,8 @@ const reports = {
             { rule_code: 'R_LABOR_HOURS', rule_name: '劳动时长', score: 1.0 },
             { rule_code: 'R_MATERIAL_COMPLETENESS', rule_name: '材料完整度', score: 1.0 },
         ],
-        input_score: 2.0,
+        score: 2.0,
         total_score: 22.5,
-        score_rule_version: 'v2026.02',
         audited_at: '2026-02-17T09:05:00Z',
     },
 }

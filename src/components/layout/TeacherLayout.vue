@@ -1,7 +1,6 @@
 <template>
   <el-container class="layout">
     <el-header class="layout-header">
-      <!-- header -->
       <div class="header-left">
         <img src="@/assets/logo.jpg" alt="山东大学综测评分" height="100%" />
       </div>
@@ -29,14 +28,14 @@
     </el-header>
     <el-container>
       <el-aside class="layout-sidebar">
-        <el-menu class="sidebar-menu" router>
+        <el-menu class="sidebar-menu" :default-active="activeMenu" router>
           <!-- 身心素养 -->
-          <el-sub-menu index="physical-mental">
+          <el-sub-menu index="physical_mental">
             <template #title>身心素养（上限15分）</template>
-            <el-menu-item index="physical-mental-basic">
+            <el-menu-item index="/teacher/application/physical_mental/basic">
               基础性评价（上限9分）
             </el-menu-item>
-            <el-menu-item index="physical-mental-achievement">
+            <el-menu-item index="/teacher/application/physical_mental/achievement">
               成果性评价（上限6分）
             </el-menu-item>
           </el-sub-menu>
@@ -44,10 +43,10 @@
           <!-- 文艺素养 -->
           <el-sub-menu index="art">
             <template #title>文艺素养（上限15分）</template>
-            <el-menu-item index="art-basic">
+            <el-menu-item index="/teacher/application/art/basic">
               基础性评价（上限9分）
             </el-menu-item>
-            <el-menu-item index="art-achievement">
+            <el-menu-item index="/teacher/application/art/achievement">
               成果性评价（上限6分）
             </el-menu-item>
           </el-sub-menu>
@@ -55,10 +54,10 @@
           <!-- 劳动素养 -->
           <el-sub-menu index="labor">
             <template #title>劳动素养（上限25分）</template>
-            <el-menu-item index="labor-basic">
+            <el-menu-item index="/teacher/application/labor/basic">
               基础性评价（上限15分）
             </el-menu-item>
-            <el-menu-item index="labor-achievement">
+            <el-menu-item index="/teacher/application/labor/achievement">
               成果性评价（上限10分）
             </el-menu-item>
           </el-sub-menu>
@@ -66,14 +65,13 @@
           <!-- 创新素养 -->
           <el-sub-menu index="innovation">
             <template #title>创新素养（上限45分）</template>
-            <el-menu-item index="innovation-basic">
+            <el-menu-item index="/teacher/application/innovation/basic">
               基础素养（上限5分）
             </el-menu-item>
-            <el-menu-item index="innovation-breakthrough">
+            <el-menu-item index="/teacher/application/innovation/achievement">
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
-
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
@@ -88,12 +86,10 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-
 const authStore = useAuthStore()
 const router = useRouter()
 
 const user = computed(() => authStore.user)
-
 
 const handleLogout = async () => {
   await authStore.logout()

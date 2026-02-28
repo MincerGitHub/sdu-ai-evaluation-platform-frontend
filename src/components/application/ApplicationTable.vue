@@ -1,9 +1,9 @@
 <template>
     <el-table :data="applications" v-loading="loading" border style="width: 100%" row-key="application_id">
         <el-table-column prop="title" label="申报名称" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="input_score" label="输入分数" width="100" align="center">
+        <el-table-column prop="score" label="分数" width="100" align="center">
             <template #default="{ row }">
-                {{ row.input_score ?? '—' }}
+                {{ row.score ?? '—' }}
             </template>
         </el-table-column>
         <el-table-column label="状态" width="120" align="center">
@@ -11,7 +11,7 @@
                 <el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag>
             </template>
         </el-table-column>
-        <!-- <el-table-column prop="input_score" label="版本" width="40" align="center">
+        <!-- <el-table-column prop="score" label="版本" width="40" align="center">
             <template #default="{ row }">
                 {{ row.version ?? '—' }}
             </template>

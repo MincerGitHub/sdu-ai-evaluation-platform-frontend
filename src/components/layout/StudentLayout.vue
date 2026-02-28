@@ -68,10 +68,10 @@
           <!-- 创新素养 -->
           <el-sub-menu index="innovation">
             <template #title>创新素养（上限45分）</template>
-            <el-menu-item index="/student/application/innovation/foundation">
+            <el-menu-item index="/student/application/innovation/basic">
               基础素养（上限5分）
             </el-menu-item>
-            <el-menu-item index="/student/application/innovation/breakthrough">
+            <el-menu-item index="/student/application/innovation/achievement">
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
