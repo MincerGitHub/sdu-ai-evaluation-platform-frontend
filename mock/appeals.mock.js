@@ -66,8 +66,13 @@ export default [
     {
         url: '/api/v1/appeals/:appeal_id/process',
         method: 'post',
-        response({ params, body }) {
-            const id = Number(params.appeal_id)
+        response({ params, body, url }) {
+            // vite-plugin-mock 在个别场景下可能不注入 params，这里兜底从 URL 提取
+            const idFromParams = params?.appeal_id
+            const idFromUrl = typeof url === 'string'
+                ? url.match(/\/appeals\/(\d+)\/process(?:\?|$)/)?.[1]
+                : null
+            const id = Number(idFromParams || idFromUrl)
             const { result, result_comment } = body || {}
             if (!result) return fail(1001, '参数校验失败', { reason: 'result 必填' })
             if (!['approved', 'rejected'].includes(result))

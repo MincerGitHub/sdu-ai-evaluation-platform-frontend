@@ -35,6 +35,21 @@ const router = createRouter({
           name: 'StudentProfile',
           component: () => import('@/views/auth/StudentProfilePage.vue'),
         },
+        {
+          path: 'announcement',
+          name: 'StudentAnnouncement',
+          component: () => import('@/views/announcement/AnnouncementPage.vue'),
+        },
+        {
+          path: 'appeals',
+          name: 'StudentAppeals',
+          component: () => import('@/views/student/AppealCreatePage.vue'),
+        },
+        {
+          path: 'appeals/create',
+          name: 'StudentAppealCreate',
+          redirect: (to) => ({ name: 'StudentAppeals', query: { ...to.query, mode: 'create' } }),
+        },
         // ...else
       ],
     },
@@ -81,9 +96,19 @@ const router = createRouter({
           component: () => import('@/views/auth/TeacherProfilePage.vue'),
         },
         {
+          path: 'announcement',
+          name: 'TeacherAnnouncement',
+          component: () => import('@/views/announcement/AnnouncementPage.vue'),
+        },
+        {
           path: 'tokens',
           name: 'TokenManagement',
           component: () => import('@/views/auth/TokenManagementPage.vue'),
+        },
+        {
+          path: 'appeals',
+          name: 'TeacherAppealProcess',
+          component: () => import('@/views/teacher/AppealProcessPage.vue'),
         },
         // ...else
       ],
@@ -105,6 +130,11 @@ const router = createRouter({
           name: 'AdminProfile',
           component: () => import('@/views/auth/AdminProfilePage.vue'),
         },
+        {
+          path: 'announcement',
+          name: 'AdminAnnouncement',
+          component: () => import('@/views/announcement/AnnouncementPage.vue'),
+        },
       ],
     },
 
@@ -112,7 +142,12 @@ const router = createRouter({
     {
       path: '/announcement',
       name: 'Announcement',
-      component: () => import('@/views/announcement/AnnouncementPage.vue'),
+      redirect: () => {
+        const auth = useAuthStore()
+        if (auth.isTeacher) return { name: 'TeacherAnnouncement' }
+        if (auth.isAdmin) return { name: 'AdminAnnouncement' }
+        return { name: 'StudentAnnouncement' }
+      },
     },
 
     // 系统管理
