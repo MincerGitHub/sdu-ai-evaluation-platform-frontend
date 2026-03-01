@@ -9,10 +9,7 @@
           <el-menu-item v-if="canUseReviewerView" index="toggle-view" @click="toggleViewMode">
             {{ isInReviewerView ? '切换到学生视图' : '切换到审核人视图' }}
           </el-menu-item>
-          <el-menu-item index="appeals">
-            申诉
-          </el-menu-item>
-          <el-menu-item index="/announcement">
+          <el-menu-item index="/student/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
@@ -32,7 +29,6 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" :default-active="activeMenu" router>
-          <!-- 身心素养 -->
           <el-sub-menu index="physical_mental">
             <template #title>身心素养（上限15分）</template>
             <el-menu-item index="/student/application/physical_mental/basic">
@@ -43,7 +39,6 @@
             </el-menu-item>
           </el-sub-menu>
 
-          <!-- 文艺素养 -->
           <el-sub-menu index="art">
             <template #title>文艺素养（上限15分）</template>
             <el-menu-item index="/student/application/art/basic">
@@ -54,7 +49,6 @@
             </el-menu-item>
           </el-sub-menu>
 
-          <!-- 劳动素养 -->
           <el-sub-menu index="labor">
             <template #title>劳动素养（上限25分）</template>
             <el-menu-item index="/student/application/labor/basic">
@@ -65,7 +59,6 @@
             </el-menu-item>
           </el-sub-menu>
 
-          <!-- 创新素养 -->
           <el-sub-menu index="innovation">
             <template #title>创新素养（上限45分）</template>
             <el-menu-item index="/student/application/innovation/basic">
@@ -75,6 +68,10 @@
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
+
+          <el-menu-item index="/student/appeals">
+            我的申诉
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
@@ -102,11 +99,9 @@ const toggleViewMode = async () => {
   if (!canUseReviewerView.value) return
 
   if (isInReviewerView.value) {
-    // 当前是审核人视图 -> 切回学生视图
     authStore.setViewMode('student')
     await router.push({ name: 'StudentDashboard' })
   } else {
-    // 当前是学生视图 -> 切到审核人视图
     authStore.setViewMode('reviewer')
     await router.push({ name: 'ReviewerDashboard' })
   }
@@ -116,5 +111,4 @@ const handleLogout = () => {
   router.push({ name: 'Login' })
   authStore.logout()
 }
-
 </script>
