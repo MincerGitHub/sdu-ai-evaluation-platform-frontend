@@ -1,15 +1,5 @@
-import { success, fail } from './utils.js'
+import { success, fail, getCurrentUser } from './utils.js'
 import { users } from './mockData.js'
-
-function getUserByAuthHeader(headers = {}) {
-    const authorization = headers.authorization || headers.Authorization || ''
-    if (!authorization.startsWith('Bearer ')) return null
-    const token = authorization.slice(7)
-    const match = token.match(/^mock_access_(\d+)_/)
-    if (!match) return null
-    const userId = Number(match[1])
-    return users.find((u) => u.id === userId) || null
-}
 
 export default [
     // 登录
@@ -77,7 +67,7 @@ export default [
         url: '/api/v1/users/me',
         method: 'get',
         response({ headers }) {
-            const user = getUserByAuthHeader(headers)
+            const user = getCurrentUser(headers)
             if (!user) return fail(1004, '未登录或 token 缺失')
             return success({
                 id: user.id,
@@ -96,7 +86,7 @@ export default [
         url: '/api/v1/users/me',
         method: 'put',
         response({ headers, body }) {
-            const user = getUserByAuthHeader(headers)
+            const user = getCurrentUser(headers)
             if (!user) return fail(1004, '未登录或 token 缺失')
 
             const { email, phone } = body || {}

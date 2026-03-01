@@ -1,4 +1,3 @@
-<!-- filepath: d:\code\FrontProjects\aiRating\code\sdu-ai-evaluation-platform-frontend\src\views\student\StudentApplicationPage.vue -->
 <template>
     <div class="application-page">
         <div class="page-header">

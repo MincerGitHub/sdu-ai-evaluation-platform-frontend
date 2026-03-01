@@ -7,14 +7,14 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item index="announcement">
+          <el-menu-item index="/admin/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="profile">
+            <el-menu-item index="/admin/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -27,7 +27,7 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" :default-active="activeMenu" router>
-          <el-menu-item index="dashboard">
+          <el-menu-item index="/admin/dashboard">
             管理员首页
           </el-menu-item>
           <el-menu-item index="/system/config">

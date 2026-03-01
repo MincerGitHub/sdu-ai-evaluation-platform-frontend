@@ -9,14 +9,17 @@
           <el-menu-item v-if="canUseReviewerView" index="toggle-view" @click="toggleViewMode">
             {{ isInReviewerView ? '切换到学生视图' : '切换到审核人视图' }}
           </el-menu-item>
-          <el-menu-item index="announcement">
+          <el-menu-item index="/student/appeals">
+            我的申诉
+          </el-menu-item>
+          <el-menu-item index="/student/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="profile">
+            <el-menu-item index="/student/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -29,6 +32,9 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" :default-active="activeMenu" router>
+          <el-menu-item index="/student/dashboard">
+            首页
+          </el-menu-item>
           <el-sub-menu index="physical_mental">
             <template #title>身心素养（上限15分）</template>
             <el-menu-item index="/student/application/physical_mental/basic">
@@ -68,10 +74,6 @@
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
-
-          <el-menu-item index="appeals">
-            我的申诉
-          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">

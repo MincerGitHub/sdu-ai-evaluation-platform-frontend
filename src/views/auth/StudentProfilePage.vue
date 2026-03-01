@@ -93,6 +93,7 @@ const fetchAndInitProfile = async () => {
     profileForm.account = user.account || ''
     profileForm.email = user.email || ''
     profileForm.phone = user.phone || ''
+    tokenForm.token = user.token || ''
   } catch (error) {
     ElMessage.error('加载用户信息失败，请稍后重试')
   }
@@ -126,7 +127,6 @@ const handleBindToken = async () => {
   bindingToken.value = true
   try {
     await authStore.bindReviewerToken(tokenForm.token)
-    tokenForm.token = ''
     ElMessage.success('令牌绑定成功')
   } catch (error) {
     ElMessage.error(error?.message || '令牌绑定失败')

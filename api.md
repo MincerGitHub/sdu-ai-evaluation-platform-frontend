@@ -741,7 +741,7 @@
 		"categories": [
 			{
 				"category": "physical_mental",
-				"category_name": "physical_mental",
+				"sub_type": "basic",
 				"pending_count": 8,
 				"approved_count": 23,
 				"rejected_count": 5
@@ -846,12 +846,8 @@
 {
 	"decision": "approved",
 	"comment": "材料齐全",
-	"reason_code": null,
-	"reason_text": null
 }
 ```
-
-说明：当 `decision=rejected` 时，`reason_code` 与 `reason_text` 必填。
 
 状态变化说明：
 
@@ -885,8 +881,6 @@
 	"application_ids": [12, 13, 14],
 	"decision": "approved",
 	"comment": "材料齐全",
-	"reason_code": null,
-	"reason_text": null
 }
 ```
 
@@ -941,8 +935,6 @@
 				"title": "数学建模竞赛",
 				"result": "approved",
 				"comment": "材料齐全",
-				"reason_code": null,
-				"reason_text": null,
 				"reviewed_at": "2026-02-26T10:30:00+00:00"
 			}
 		]

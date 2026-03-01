@@ -1,19 +1,17 @@
-import { success, fail, now } from './utils.js'
-
-const files = [
-    { file_id: 'file_abc123', filename: 'award.pdf', content_type: 'application/pdf', size: 245761, url: '/api/v1/files/file_abc123' },
-    { file_id: 'file_def456', filename: 'certificate.jpg', content_type: 'image/jpeg', size: 102400, url: '/api/v1/files/file_def456' },
-]
-
-let fileSeq = 1000
+import { success, fail, now, getCurrentUser } from './utils.js'
+import { files, seq } from './mockData.js'
 
 export default [
+    // 【需要用户信息：记录 uploader_id】
     {
         url: '/api/v1/files/upload',
         method: 'post',
-        response() {
-            const fileId = `f_${(++fileSeq).toString(16).padStart(16, '0')}`
-            const file = { file_id: fileId, filename: 'uploaded_file.pdf', content_type: 'application/pdf', size: Math.floor(Math.random() * 500000) + 10000, url: `/api/v1/files/${fileId}` }
+        response({ headers }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
+            const fileId = `f_${(++seq.file).toString(16).padStart(16, '0')}`
+            const file = { file_id: fileId, filename: 'uploaded_file.pdf', content_type: 'application/pdf', size: Math.floor(Math.random() * 500000) + 10000, uploader_id: currentUser.id, url: `/api/v1/files/${fileId}` }
             files.push(file)
             return success(file, '上传成功')
         },

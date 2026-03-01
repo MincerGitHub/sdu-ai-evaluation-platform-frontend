@@ -1,3 +1,5 @@
+import { users } from './mockData.js'
+
 /**
  * 生成 request_id
  */
@@ -38,7 +40,7 @@ export function fail(code, message, error) {
 /**
  * 分页工具
  */
-export function paginate(list, page = 1, size = 10) {
+export function paginate(list, page = 1, size = 100) {
     const p = Math.max(1, Number(page))
     const s = Math.min(100, Math.max(1, Number(size)))
     const total = list.length
@@ -57,4 +59,20 @@ export function paginate(list, page = 1, size = 10) {
  */
 export function now() {
     return new Date().toISOString()
+}
+
+/**
+ * 从请求 headers 中解析当前登录用户
+ * 约定 token 格式：Bearer mock_access_{userId}_{timestamp}
+ * @param {object} headers - 请求头对象
+ * @returns {object|null} 用户对象，未找到返回 null
+ */
+export function getCurrentUser(headers = {}) {
+    const authorization = headers.authorization || headers.Authorization || ''
+    if (!authorization.startsWith('Bearer ')) return null
+    const token = authorization.slice(7)
+    const match = token.match(/^mock_access_(\d+)_/)
+    if (!match) return null
+    const userId = Number(match[1])
+    return users.find((u) => u.id === userId) || null
 }

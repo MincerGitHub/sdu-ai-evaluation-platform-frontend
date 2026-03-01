@@ -36,7 +36,7 @@ const reviewService = {
     /**
      * 提交审核决策（单条）
      * @param {number} applicationId
-     * @param {Object} payload - { decision, comment, reason_code, reason_text }
+     * @param {Object} payload - { decision, comment}
      */
     submitDecision(applicationId, payload) {
         return http.post(`/reviews/${applicationId}/decision`, payload)
@@ -44,7 +44,7 @@ const reviewService = {
 
     /**
      * 批量提交审核决策
-     * @param {Object} payload - { application_ids, decision, comment, reason_code, reason_text }
+     * @param {Object} payload - { application_ids, decision, comment}
      */
     batchDecision(payload) {
         return http.post('/reviews/batch-decision', payload)

@@ -6,17 +6,20 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item index="appeals">
-            申诉
+          <el-menu-item index="/teacher/tokens">
+            令牌管理
           </el-menu-item>
-          <el-menu-item index="announcement">
+          <el-menu-item index="/teacher/appeals">
+            申诉列表
+          </el-menu-item>
+          <el-menu-item index="/teacher/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="profile">
+            <el-menu-item index="/teacher/profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -29,8 +32,8 @@
     <el-container>
       <el-aside class="layout-sidebar">
         <el-menu class="sidebar-menu" :default-active="activeMenu" router>
-          <el-menu-item index="dashboard">
-            教师首页
+          <el-menu-item index="/teacher/dashboard">
+            首页
           </el-menu-item>
           <!-- 身心素养 -->
           <el-sub-menu index="physical_mental">
@@ -75,12 +78,6 @@
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="appeals">
-            申诉列表
-          </el-menu-item>
-          <el-menu-item index="tokens">
-            令牌管理
-          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">

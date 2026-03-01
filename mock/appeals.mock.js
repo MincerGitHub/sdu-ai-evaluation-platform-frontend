@@ -1,29 +1,24 @@
-import { success, fail, paginate, now } from './utils.js'
+import { success, fail, now, getCurrentUser, paginate } from './utils.js'
 import { appeals, seq, getUserById } from './mockData.js'
 
-// mock 环境下：
-//   提交申诉 -> 当前学生固定为 学生1（id=1）
-//   处理申诉 -> 当前教师固定为 老师1（id=4）
-// 真实环境由 token 解析，此处用常量模拟
-const CURRENT_STUDENT_ID = 1    // 学生1
-const CURRENT_TEACHER_ID = 4    // 老师1
-
 export default [
-    // 1) 提交申诉（学生）
+    // 1) 提交申诉（学生）  【需要用户信息：确定 student_id/student_name】
     {
         url: '/api/v1/appeals',
         method: 'post',
-        response({ body }) {
+        response({ headers, body }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const { announcement_id, content, attachments } = body || {}
             if (!announcement_id || !content)
                 return fail(1001, '参数校验失败', { reason: 'announcement_id/content 必填' })
 
-            const u = getUserById(CURRENT_STUDENT_ID)
             const appeal = {
                 id: ++seq.appeal,
                 announcement_id,
-                student_id: CURRENT_STUDENT_ID,
-                student_name: u ? u.name : '未知',
+                student_id: currentUser.id,
+                student_name: currentUser.name,
                 content,
                 attachments: attachments || [],
                 result: null,
@@ -46,27 +41,38 @@ export default [
         },
     },
 
-    // 2) 获取申诉列表（教师/管理员查看全部；学生只看自己）
+    // 2) 获取申诉列表（教师/管理员查看全部；学生只看自己）  【需要用户信息：学生过滤自己的】
     {
         url: '/api/v1/appeals',
         method: 'get',
-        response({ query }) {
+        response({ headers, query }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const { page, size, student_id, status, announcement_id } = query || {}
             let list = [...appeals]
+
+            // 学生只能看自己的申诉
+            if (currentUser.role === 'student') {
+                list = list.filter((a) => a.student_id === currentUser.id)
+            }
+
             if (student_id) list = list.filter((a) => a.student_id === Number(student_id))
             if (status) list = list.filter((a) => a.status === status)
             if (announcement_id) list = list.filter((a) => a.announcement_id === Number(announcement_id))
-            // 按创建时间倒序
             list.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
             return success(paginate(list, page, size), '获取成功')
         },
     },
 
-    // 3) 处理申诉（教师/管理员）
+    // 3) 处理申诉（教师/管理员）  【需要用户信息：确定 processed_by】
     {
         url: '/api/v1/appeals/:appeal_id/process',
         method: 'post',
-        response({ query, body }) {
+        response({ headers, query, body }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const id = Number(query.appeal_id)
             const { result, result_comment } = body || {}
             if (!result) return fail(1001, '参数校验失败', { reason: 'result 必填' })
@@ -81,7 +87,7 @@ export default [
             appeal.result_comment = result_comment || null
             appeal.status = 'processed'
             appeal.processed_at = now()
-            appeal.processed_by = CURRENT_TEACHER_ID
+            appeal.processed_by = currentUser.id
 
             return success(
                 {

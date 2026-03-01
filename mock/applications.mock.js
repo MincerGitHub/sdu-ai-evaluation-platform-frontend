@@ -1,23 +1,22 @@
-import { success, fail, now } from './utils.js'
+import { success, fail, now, getCurrentUser } from './utils.js'
 import { applications, seq } from './mockData.js'
 
-// mock 环境下：当前登录用户固定为 学生1（id=1）
-// 真实环境由 token 解析，此处用常量模拟
-const CURRENT_USER_ID = 1
-
 export default [
-    // ---- 创建 ----
+    // ---- 创建 ----  【需要用户信息：确定 user_id】
     {
         url: '/api/v1/applications',
         method: 'post',
-        response({ body }) {
+        response({ headers, body }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const { award_uid, title, description, occurred_at, attachments, category, sub_type, score } = body || {}
             if (!award_uid || !title || !category || !sub_type || score == null)
                 return fail(1001, '参数校验失败', { reason: 'award_uid/title/category/sub_type/score 必填' })
             const id = ++seq.application
             const app = {
                 id,
-                user_id: CURRENT_USER_ID,
+                user_id: currentUser.id,
                 category,
                 sub_type,
                 award_uid,
@@ -28,9 +27,6 @@ export default [
                 status: 'pending_review',
                 score,
                 comment: null,
-                reason_code: null,
-                reason_text: null,
-                // version: 1,
                 is_deleted: false,
                 created_at: now(),
                 updated_at: now(),
@@ -39,13 +35,16 @@ export default [
             return success({ id: app.id, status: app.status, score: app.score, award_uid: app.award_uid, created_at: app.created_at }, '创建成功')
         },
     },
-    // ---- 分类汇总 ----
+    // ---- 分类汇总 ----  【需要用户信息：只查自己的】
     {
         url: '/api/v1/applications/my/category-summary',
         method: 'get',
-        response({ query }) {
+        response({ headers, query }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const term = query?.term || '2025-2026-1'
-            const myApps = applications.filter((a) => a.user_id === CURRENT_USER_ID && !a.is_deleted)
+            const myApps = applications.filter((a) => a.user_id === currentUser.id && !a.is_deleted)
             const map = {}
             myApps.forEach((a) => {
                 const key = `${a.category}__${a.sub_type}`
@@ -59,13 +58,16 @@ export default [
             return success({ term, categories, total_score: categories.reduce((s, c) => s + c.category_score, 0) }, '获取成功')
         },
     },
-    // ---- 分类明细 ----
+    // ---- 分类明细 ----  【需要用户信息：只查自己的】
     {
         url: '/api/v1/applications/my/by-category',
         method: 'get',
-        response({ query }) {
+        response({ headers, query }) {
+            const currentUser = getCurrentUser(headers)
+            if (!currentUser) return fail(1004, '未登录或 token 缺失')
+
             const { category, sub_type, status, term } = query || {}
-            let list = applications.filter((a) => a.user_id === CURRENT_USER_ID && !a.is_deleted)
+            let list = applications.filter((a) => a.user_id === currentUser.id && !a.is_deleted)
             if (category) list = list.filter((a) => a.category === category)
             if (sub_type) list = list.filter((a) => a.sub_type === sub_type)
             if (status) list = list.filter((a) => a.status === status)
@@ -108,7 +110,7 @@ export default [
         url: '/api/v1/applications/:application_id',
         method: 'put',
         response({ query, body }) {
-            const id = Number(query?.application_id)
+            const id = Number(query.application_id)
             const app = applications.find((a) => a.id === id && !a.is_deleted)
             if (!app) return fail(1002, '资源不存在')
             if (!['pending_ai', 'pending_review'].includes(app.status)) return fail(1000, `当前状态 ${app.status} 不允许编辑`)
@@ -130,8 +132,8 @@ export default [
     {
         url: '/api/v1/applications/:application_id',
         method: 'delete',
-        response({ params, query }) {
-            const id = Number(params?.application_id ?? query?.application_id)
+        response({ query }) {
+            const id = Number(query.application_id)
             const app = applications.find((a) => a.id === id && !a.is_deleted)
             if (!app) return fail(1002, '资源不存在')
             app.is_deleted = true

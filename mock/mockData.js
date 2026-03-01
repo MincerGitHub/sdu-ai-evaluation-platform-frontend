@@ -560,13 +560,124 @@ export const appeals = [
 ]
 
 // ------------------------------------------------------------
+// 表7：导出任务表
+// 由教师发起导出操作后生成
+// ------------------------------------------------------------
+export const exportTasks = [
+    {
+        task_id: 'exp_1',
+        scope: 'applications',
+        format: 'xlsx',
+        filters: { grade: 2023, class_id: 301, status: 'approved' },
+        status: 'completed',          // pending | processing | completed | failed
+        created_by: 4,                // 老师1
+        file_url: '/api/v1/teacher/exports/exp_10001/download',
+        created_at: '2026-02-25T09:00:00+00:00',
+        completed_at: '2026-02-25T09:05:00+00:00',
+    },
+    {
+        task_id: 'exp_2',
+        scope: 'statistic',
+        format: 'pdf',
+        filters: { grade: 2023, class_id: 302 },
+        status: 'completed',
+        created_by: 4,
+        file_url: '/api/v1/teacher/exports/exp_10002/download',
+        created_at: '2026-02-26T09:00:00+00:00',
+        completed_at: '2026-02-26T09:08:00+00:00',
+    },
+]
+
+// ------------------------------------------------------------
+// 表8：归档表
+// 由教师/管理员基于导出任务创建归档记录
+// export_task_id 对应 表7：导出任务表
+// class_ids 对应班级
+// ------------------------------------------------------------
+export const archives = [
+    {
+        archive_id: 'arc_1',
+        archive_name: '2025-2026-1_2023级_综测统计表',
+        term: '2025-2026-1',
+        grade: 2023,
+        class_ids: [301, 302],
+        is_announced: true,
+        export_task_id: 'exp_10001',
+        created_at: '2026-02-25T10:00:00+00:00',
+    },
+    {
+        archive_id: 'arc_2',
+        archive_name: '2025-2026-2_2023级_综测统计表',
+        term: '2025-2026-2',
+        grade: 2023,
+        class_ids: [301, 302],
+        is_announced: false,
+        export_task_id: 'exp_10002',
+        created_at: '2026-02-26T10:00:00+00:00',
+    },
+]
+
+// ------------------------------------------------------------
+// 表9：公示表
+// archive_id 对应 表8：归档表
+// ------------------------------------------------------------
+export const announcements = [
+    {
+        id: 1,
+        title: '2025-2026学年第一学期综测公示',
+        archive_id: 'arc_9001',
+        start_at: '2026-02-15T00:00:00+00:00',
+        end_at: '2026-02-20T23:59:59+00:00',
+        status: 'active',
+        created_at: '2026-02-14T10:00:00+00:00',
+    },
+]
+
+// ------------------------------------------------------------
+// 表10：邮件日志表
+// application_id 对应 表3：申报表
+// to 对应 users 表中学生邮箱
+// ------------------------------------------------------------
+export const emailLogs = [
+    {
+        id: 1,
+        application_id: 4,           // 学生1的"校级合唱比赛二等奖"被驳回
+        to: 'xuesheng1@example.com',  // 学生1
+        subject: '申报驳回通知',
+        status: 'success',
+        sent_at: '2026-02-23T16:05:00+00:00',
+    },
+    {
+        id: 2,
+        application_id: 3,           // 学生1的"大学生创新训练项目"
+        to: 'xuesheng1@example.com',
+        subject: 'AI 异常通知',
+        status: 'success',
+        sent_at: '2026-02-17T09:10:00+00:00',
+    },
+    {
+        id: 3,
+        application_id: 9,           // 学生3的"羽毛球赛校级冠军"
+        to: 'xuesheng3@example.com',  // 学生3
+        subject: '申报驳回通知',
+        status: 'failed',
+        sent_at: '2026-02-20T11:00:00+00:00',
+    },
+]
+
+// ------------------------------------------------------------
 // 序列号（各 mock 文件通过引用修改，保持运行时状态）
 // ------------------------------------------------------------
 export const seq = {
     application: 11,   // 下一个 application id = ++seq.application
-    reviewRecord: 6,  // 下一个 review_record id = ++seq.reviewRecord
+    reviewRecord: 6,   // 下一个 review_record id = ++seq.reviewRecord
     token: 4,          // 下一个 token id = ++seq.token
     appeal: 3,         // 下一个 appeal id = ++seq.appeal
+    file: 6,           // 下一个 file id = ++seq.file
+    emailLog: 3,       // 下一个 email_log id = ++seq.emailLog
+    archive: 2,     // 下一个 archive 序号 = ++seq.archive -> arc_{seq.archive}
+    announcement: 1,   // 下一个 announcement id = ++seq.announcement
+    exportTask: 2, // 下一个 export_task 序号 = ++seq.exportTask -> exp_{seq.exportTask}
 }
 
 // ------------------------------------------------------------

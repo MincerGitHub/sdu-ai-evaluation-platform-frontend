@@ -1,4 +1,3 @@
-<!-- filepath: d:\code\FrontProjects\aiRating\code\sdu-ai-evaluation-platform-frontend\src\components\review\ReviewDetailDialog.vue -->
 <template>
     <el-dialog v-model="visible" :title="dialogTitle" width="600px" destroy-on-close>
         <div v-loading="loading">

@@ -5,7 +5,7 @@
     <div v-loading="loading" class="download-list">
       <template v-if="downloadItems.length">
         <a v-for="item in downloadItems" :key="item.id" :href="item.url" class="download-link" target="_blank"
-          rel="noopener noreferrer" :download="item.fileName" @click.prevent="handleDownload(item)">
+          rel="noopener noreferrer" :download="item.fileName" download>
           - {{ item.label }}
         </a>
       </template>
@@ -46,14 +46,6 @@ const fetchAnnouncements = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const handleDownload = (item) => {
-  if (!item?.url || item.url === '#') {
-    ElMessage.warning('下载链接无效')
-    return
-  }
-  window.open(item.url, '_blank')
 }
 
 onMounted(fetchAnnouncements)
