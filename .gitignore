@@ -16,7 +16,3 @@ dist-ssr/
 !.vscode/tasks.json
 
 z-buffer/
-
-# Local temporary debug artifacts
-.tmp-*.log
-.tmp-*.png

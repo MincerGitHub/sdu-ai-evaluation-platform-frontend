@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import announcementService from '../services/announcementService';
+import archiveService from '../services/archiveService';
 
 export const useAnnouncementStore = defineStore('announcement', () => {
     const announcements = ref([]);
@@ -11,7 +11,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await announcementService.getAnnouncements();
+            const response = await archiveService.getAnnouncements();
             announcements.value = response.data;
         } catch (err) {
             error.value = err.message || 'Failed to fetch announcements';

@@ -43,7 +43,7 @@ const router = createRouter({
         {
           path: 'appeals',
           name: 'StudentAppeals',
-          component: () => import('@/views/student/AppealCreatePage.vue'),
+          component: () => import('@/views/announcement/AppealCreatePage.vue'),
         },
         {
           path: 'appeals/create',
@@ -108,7 +108,7 @@ const router = createRouter({
         {
           path: 'appeals',
           name: 'TeacherAppealProcess',
-          component: () => import('@/views/teacher/AppealProcessPage.vue'),
+          component: () => import('@/views/announcement/AppealProcessPage.vue'),
         },
         // ...else
       ],
@@ -135,39 +135,23 @@ const router = createRouter({
           name: 'AdminAnnouncement',
           component: () => import('@/views/announcement/AnnouncementPage.vue'),
         },
+        // 系统管理
+        {
+          path: 'config',
+          name: 'SystemConfig',
+          component: () => import('@/views/system/SystemConfigPage.vue'),
+        },
+        {
+          path: 'logs',
+          name: 'SystemLogs',
+          component: () => import('@/views/system/SystemLogsPage.vue'),
+        },
+        {
+          path: 'award-dicts',
+          name: 'AwardDicts',
+          component: () => import('@/views/system/AwardDictsPage.vue'),
+        },
       ],
-    },
-
-    // 公示
-    {
-      path: '/announcement',
-      name: 'Announcement',
-      redirect: () => {
-        const auth = useAuthStore()
-        if (auth.isTeacher) return { name: 'TeacherAnnouncement' }
-        if (auth.isAdmin) return { name: 'AdminAnnouncement' }
-        return { name: 'StudentAnnouncement' }
-      },
-    },
-
-    // 系统管理
-    {
-      path: '/system/config',
-      name: 'SystemConfig',
-      component: () => import('@/views/system/SystemConfigPage.vue'),
-      meta: { role: ROLES.ADMIN },
-    },
-    {
-      path: '/system/logs',
-      name: 'SystemLogs',
-      component: () => import('@/views/system/SystemLogsPage.vue'),
-      meta: { role: ROLES.ADMIN },
-    },
-    {
-      path: '/system/award-dicts',
-      name: 'AwardDicts',
-      component: () => import('@/views/system/AwardDictsPage.vue'),
-      meta: { role: ROLES.ADMIN },
     },
 
     // 错误

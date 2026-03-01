@@ -4,16 +4,8 @@
 
     <div v-loading="loading" class="download-list">
       <template v-if="downloadItems.length">
-        <a
-          v-for="item in downloadItems"
-          :key="item.id"
-          :href="item.url"
-          class="download-link"
-          target="_blank"
-          rel="noopener noreferrer"
-          :download="item.fileName"
-          @click.prevent="handleDownload(item)"
-        >
+        <a v-for="item in downloadItems" :key="item.id" :href="item.url" class="download-link" target="_blank"
+          rel="noopener noreferrer" :download="item.fileName" @click.prevent="handleDownload(item)">
           - {{ item.label }}
         </a>
       </template>
@@ -26,7 +18,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import announcementService from '@/services/announcementService'
+import archiveService from '@/services/archiveService'
 
 const loading = ref(false)
 const announcements = ref([])
@@ -36,7 +28,7 @@ const downloadItems = computed(() =>
     .filter((item) => item && (item.archive_id || item.download_url))
     .map((item, index) => {
       const id = item.id ?? `${item.archive_id}-${index}`
-      const url = item.download_url || announcementService.getDownloadUrl(item.archive_id)
+      const url = item.download_url || archiveService.getDownloadUrl(item.archive_id)
       const label = item.title || `公示文件 ${index + 1}`
       const fileName = `${label}.xlsx`
       return { id, label, url, fileName }
@@ -46,7 +38,7 @@ const downloadItems = computed(() =>
 const fetchAnnouncements = async () => {
   loading.value = true
   try {
-    const response = await announcementService.getAnnouncements()
+    const response = await archiveService.getAnnouncements()
     announcements.value = Array.isArray(response?.data) ? response.data : []
   } catch (error) {
     announcements.value = []

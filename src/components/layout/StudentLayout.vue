@@ -9,14 +9,14 @@
           <el-menu-item v-if="canUseReviewerView" index="toggle-view" @click="toggleViewMode">
             {{ isInReviewerView ? '切换到学生视图' : '切换到审核人视图' }}
           </el-menu-item>
-          <el-menu-item index="/student/announcement">
+          <el-menu-item index="announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="/student/profile">
+            <el-menu-item index="profile">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -69,7 +69,7 @@
             </el-menu-item>
           </el-sub-menu>
 
-          <el-menu-item index="/student/appeals">
+          <el-menu-item index="appeals">
             我的申诉
           </el-menu-item>
         </el-menu>
