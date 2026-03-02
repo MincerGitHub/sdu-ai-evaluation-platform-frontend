@@ -54,7 +54,7 @@ const onSubmit = async () => {
     if (role === ROLES.ADMIN) {
       await router.push({ name: 'AdminDashboard' })
     } else if (role === ROLES.TEACHER) {
-      await router.push({ name: 'TeacherDashboard' })
+      await router.push({ name: 'TeacherStatistics' })
     } else {
       await router.push({ name: 'StudentDashboard' })
     }

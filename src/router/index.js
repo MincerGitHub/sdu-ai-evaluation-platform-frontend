@@ -86,6 +86,16 @@ const router = createRouter({
           component: () => import('@/views/dashboard/TeacherDashboard.vue'),
         },
         {
+          path: 'statistics',
+          name: 'TeacherStatistics',
+          component: () => import('@/views/teacher/TeacherStatisticsPage.vue'),
+        },
+        {
+          path: 'all-applications',
+          name: 'TeacherAllApplications',
+          component: () => import('@/views/teacher/TeacherAllApplicationsPage.vue'),
+        },
+        {
           path: 'application/:category/:subType',
           name: 'TeacherApplication',
           component: () => import('@/views/application/ReviewApplicationPage.vue'),

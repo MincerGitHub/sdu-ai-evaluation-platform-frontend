@@ -16,3 +16,9 @@ dist-ssr/
 !.vscode/tasks.json
 
 z-buffer/
+
+# local API decomposition docs (do not commit)
+细拆的api/
+
+# local runtime logs
+.tmp-*.log

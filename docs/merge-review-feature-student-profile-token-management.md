@@ -1,123 +1,78 @@
-# 功能分支合并说明（负责人审阅版，第二版）
+﻿# 功能分支合并说明（负责人审阅版，第三版）
 
 ## 1. 文档信息
 
-- 文档日期：2026-03-01
+- 文档日期：2026-03-02
 - 基线分支：`main`（对比 `origin/main`）
-- 当前功能分支：`feature/student-appeal-create-page`
-- 文档定位：在上一版“个人信息页 + 令牌管理”合并说明基础上，补充本轮“申诉管理 + 公示页”增量改动总结。
+- 当前功能分支：`feature/teacher-query-module`
+- 文档定位：在第二版基础上，补充“教师申报查询模块”最新可提审改动与测试步骤
 
 ---
 
-## 2. 本轮改动目标
+## 2. 本轮目标（增量）
 
-本轮主要交付 3 类能力：
+本轮主要交付教师端申报查询模块的两项能力，并完成弹窗样式对齐：
 
-1. 学生端申诉页（列表 + 新建）
-2. 教师端申诉处理页（审核 + 通知）
-3. 公示页实现（学生/教师/管理员三角色统一视图效果）
-
-并处理了与这三项相关的导航与 Mock 稳定性问题。
+1. 教师对全部申报进行筛查、复核、归档
+2. 教师按班级查看申报统计信息
+3. 教师点击“审核申报”后，弹窗样式与原型对齐（重点）
 
 ---
 
-## 3. 相对原项目的主要变化
+## 3. 相对上一版的核心改动
 
-### 3.1 学生申诉页：`/student/appeals`
+### 3.1 教师全部申报页（`/teacher/all-applications`）
 
-新增页面：`src/views/student/AppealCreatePage.vue`
+文件：`src/views/teacher/TeacherAllApplicationsPage.vue`
 
-实现内容：
+已实现：
 
-- 默认进入“我的申诉”列表页，展示已提交申诉
-- 点击“+ 新建”后切换到新建表单（按原型“先列表再新建”）
-- 新建表单包含：
-  - 公示选择
-  - 申诉内容（必填）
-  - 证明材料上传（Mock）
-- 支持查看申诉详情弹窗（状态、内容、附件、处理备注）
+- 列表筛选：关键词、状态、班级
+- 表格字段：年级、班级、学号、申报名称、项目、审核状态
+- 行级操作：`审核申报`、`归档`
+- 批量操作：批量归档
 
-路由：
+本次重点修正（按原型）：
 
-- `StudentAppeals`: `/student/appeals`
-- `StudentAppealCreate`: `/student/appeals/create`（重定向到 `/student/appeals?mode=create`）
+- 原“复核申报（单选 + 备注）”弹窗，调整为“审核申报”弹窗
+- 弹窗字段改为：
+  - 申报名称
+  - 项目
+  - 证明材料（支持链接查看）
+  - AI 自动检测结果
+  - 评价（可编辑，默认空）
+- 底部按钮改为：
+  - 通过
+  - 拒绝
+  - 返回
 
----
+### 3.2 教师申报统计页（`/teacher/statistics`）
 
-### 3.2 教师申诉处理页：`/teacher/appeals`
+文件：`src/views/teacher/TeacherStatisticsPage.vue`
 
-新增页面：`src/views/teacher/AppealProcessPage.vue`
+已实现：
 
-实现内容：
+- 按年级/班级筛选
+- 统计指标展示：总申报数、拒绝申报数、待审核申报数、平均分、总分
 
-- 申诉列表查询（状态筛选 + 分页）
-- 查看申诉详情与证明材料
-- 处理动作：通过 / 拒绝
-- 可选发送结果邮件通知
-- 列表导出（CSV）
+### 3.3 服务与 Mock 数据联动
 
-新增 Store：
+文件：
 
-- `src/stores/appeal.js`
-  - `fetchAppeals`
-  - `processAppeal`
-  - 处理过程 loading / error 管理
+- `src/services/statisticService.js`
+- `mock/statistic.mock.js`
 
-服务联动：
+本次补充：
 
-- `src/services/notificationService.js` 补充申诉结果邮件发送能力
+- 教师查询列表接口返回增加字段：`attachments`、`ai_result`、`description`
+- 确保“审核申报”弹窗可直接展示证明材料和 AI 结果
+- 复核提交接口继续复用：`approved` / `rejected`
 
----
+### 3.4 废弃服务移除
 
-### 3.3 公示页实现（统一视图）
+文件：`src/services/counselorService.js`
 
-新增服务：
-
-- `src/services/announcementService.js`
-  - `getAnnouncements()`
-  - `getDownloadUrl(archiveId)`
-
-页面实现：
-
-- `src/views/announcement/AnnouncementPage.vue`
-  - 标题“公示”
-  - 下载链接列表（来自 `/announcements`）
-  - 空态和异常提示
-
-字体与视觉调整（根据反馈）：
-
-- 公示标题、链接字体从过大尺寸调整为后台页面常规尺寸
-- 保留与系统整体风格一致的简洁展示
-
----
-
-### 3.4 路由与布局接线（公示页）
-
-为保证“同内容、不同角色布局一致展示”，新增角色内路由：
-
-- 学生：`/student/announcement`
-- 教师：`/teacher/announcement`
-- 管理员：`/admin/announcement`
-
-并保留全局入口：
-
-- `/announcement` 会按当前登录角色自动重定向到对应角色路由
-
-布局导航调整：
-
-- `StudentLayout` 顶栏公示入口改为 `/student/announcement`
-- `TeacherLayout` 顶栏公示入口改为 `/teacher/announcement`
-- `AdminLayout` 顶栏公示入口改为 `/admin/announcement`
-- 按最新需求，教师端顶栏已移除“申诉列表”，仅保留“公示”与用户菜单（侧边栏仍保留“申诉列表”）
-
----
-
-### 3.5 Mock 稳定性修复
-
-修改：`mock/appeals.mock.js`
-
-- 修复教师处理申诉时，动态参数缺失导致的 `Network Error` / 开发服务中断问题
-- 提升处理接口参数读取兼容性，保障“失效/处理”等动作可稳定回包
+- 已确认弃用，已从项目中移除
 
 ---
 
@@ -125,21 +80,22 @@
 
 ### 新增文件
 
-- `src/services/announcementService.js`
-- `src/stores/appeal.js`
-- `src/views/student/AppealCreatePage.vue`
-- `src/views/teacher/AppealProcessPage.vue`
+- `src/services/statisticService.js`
+- `mock/statistic.mock.js`
+- `src/views/teacher/TeacherStatisticsPage.vue`
+- `src/views/teacher/TeacherAllApplicationsPage.vue`
 
 ### 主要修改文件
 
-- `src/views/announcement/AnnouncementPage.vue`
+- `src/components/layout/TeacherLayout.vue`
 - `src/router/index.js`
 - `src/services/index.js`
-- `src/services/notificationService.js`
-- `mock/appeals.mock.js`
-- `src/components/layout/StudentLayout.vue`
-- `src/components/layout/TeacherLayout.vue`
-- `src/components/layout/AdminLayout.vue`
+- `src/views/auth/LoginPage.vue`
+- `.gitignore`
+
+### 删除文件
+
+- `src/services/counselorService.js`
 
 ---
 
@@ -149,59 +105,54 @@
 
 - 执行 `npm run build`：通过
 
-### 5.2 业务冒烟（已执行）
+### 5.2 手工回归步骤（负责人可直接复现）
 
-- 学生链路
-  - 登录 -> 我的申诉列表 -> 新建申诉 -> 提交成功 -> 列表可见
-- 教师链路
-  - 登录 -> 申诉列表 -> 处理通过/拒绝 -> 状态刷新
-  - 可选发送邮件通知链路可走通（Mock）
-- 公示链路
-  - 学生/教师/管理员分别进入各自公示路由，页面内容结构一致
+#### A. 教师审核弹窗样式与交互
 
-### 5.3 已闭环问题
+1. 启动项目：`npm run dev`
+2. 登录教师账号：`teacher01 / 12345678`
+3. 进入：`/teacher/all-applications`
+4. 点击任意一行 `审核申报`
+5. 预期：弹窗标题为“审核申报”，字段包含
+   - 申报名称
+   - 项目
+   - 证明材料
+   - AI 自动检测结果
+   - 评价
+6. 预期：底部按钮为 `通过`、`拒绝`、`返回`
 
-1. 教师处理申诉时出现 `Network Error` 且服务中断：已修复
-2. 教师顶栏误出现“申诉列表”：已按需求移除
-3. 公示页字体过大：已调整为常规阅读尺寸
+#### B. 教师复核动作
+
+1. 在弹窗点击 `通过` 或 `拒绝`
+2. 预期：提示“审核成功”
+3. 预期：列表对应行状态刷新为“已通过”或“已驳回”
+
+#### C. 教师统计页
+
+1. 进入：`/teacher/statistics`
+2. 使用年级/班级筛选后点击查询
+3. 预期：表格统计数据正常刷新
 
 ---
 
-## 6. 已知限制与后续建议
+## 6. 已知事项
 
-1. 公示下载当前为 Mock 链接，后续需对接真实文件下载能力。
-2. 公示数据目前由 Mock 提供，默认条目较少；若要与原型“多条下载项”一致，可补充 Mock 数据。
-3. 学生端“删除申诉”当前仍为占位提示，后续若需求确认可补真实删除接口与交互。
+1. 当前数据来源为 Mock，证明材料链接与 AI 结果同样为 Mock 数据展示
+2. 提交后若切换到真实后端，需要将 `statisticService` 对接正式接口并校对字段命名
 
 ---
 
 ## 7. 合并建议（Feature Branch Workflow，无 PR）
 
-建议由有主干权限同学执行：
-
 ```bash
 git switch main
 git pull origin main
-git merge --no-ff feature/student-appeal-create-page
+git merge --no-ff feature/teacher-query-module
 git push origin main
 ```
 
-合并后建议做 5~10 分钟冒烟：
+合并后建议最少执行 5 分钟冒烟：
 
-1. 学生：`/student/appeals` 新建申诉
-2. 教师：`/teacher/appeals` 处理申诉
-3. 三角色：各自公示入口与下载链接显示
-
----
-
-## 8. 回滚方案
-
-如主干出现异常，可快速回滚本次合并提交：
-
-```bash
-git switch main
-git log --oneline
-git revert <merge_commit_sha>
-git push origin main
-```
-
+1. `/teacher/all-applications` 打开审核弹窗并执行一次通过/拒绝
+2. `/teacher/statistics` 执行一次筛选查询
+3. `/teacher/announcement` 确认公示入口与页面可用

@@ -5,21 +5,21 @@
         <img src="@/assets/logo.jpg" alt="山东大学综测评分" height="100%" />
       </div>
       <div class="header-right">
-        <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item index="/teacher/tokens">
-            令牌管理
+        <el-menu mode="horizontal" class="header-menu" :ellipsis="false">
+          <el-menu-item index="archive-entry" @click="go('/teacher/all-applications')">
+            归档
           </el-menu-item>
-          <el-menu-item index="/teacher/appeals">
-            申诉列表
+          <el-menu-item index="export-entry" @click="go('/teacher/all-applications')">
+            导出
           </el-menu-item>
-          <el-menu-item index="/teacher/announcement">
+          <el-menu-item index="/teacher/announcement" @click="go('/teacher/announcement')">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
               <span>{{ user.name || user.account }}</span>
             </template>
-            <el-menu-item index="/teacher/profile">
+            <el-menu-item index="/teacher/profile" @click="go('/teacher/profile')">
               个人信息
             </el-menu-item>
             <el-menu-item index="logout" @click="handleLogout">
@@ -31,53 +31,27 @@
     </el-header>
     <el-container>
       <el-aside class="layout-sidebar">
-        <el-menu class="sidebar-menu" :default-active="activeMenu" router>
-          <el-menu-item index="/teacher/dashboard">
-            首页
+        <el-menu
+          class="sidebar-menu"
+          :default-active="activeMenu"
+          :default-openeds="['teacher-application']"
+          router
+        >
+          <el-sub-menu index="teacher-application">
+            <template #title>申报</template>
+            <el-menu-item index="/teacher/statistics" @click="go('/teacher/statistics')">
+              - 申报统计
+            </el-menu-item>
+            <el-menu-item index="/teacher/all-applications" @click="go('/teacher/all-applications')">
+              - 全部申报
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item index="/teacher/appeals" @click="go('/teacher/appeals')">
+            申诉列表
           </el-menu-item>
-          <!-- 身心素养 -->
-          <el-sub-menu index="physical_mental">
-            <template #title>身心素养（上限15分）</template>
-            <el-menu-item index="/teacher/application/physical_mental/basic">
-              基础性评价（上限9分）
-            </el-menu-item>
-            <el-menu-item index="/teacher/application/physical_mental/achievement">
-              成果性评价（上限6分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 文艺素养 -->
-          <el-sub-menu index="art">
-            <template #title>文艺素养（上限15分）</template>
-            <el-menu-item index="/teacher/application/art/basic">
-              基础性评价（上限9分）
-            </el-menu-item>
-            <el-menu-item index="/teacher/application/art/achievement">
-              成果性评价（上限6分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 劳动素养 -->
-          <el-sub-menu index="labor">
-            <template #title>劳动素养（上限25分）</template>
-            <el-menu-item index="/teacher/application/labor/basic">
-              基础性评价（上限15分）
-            </el-menu-item>
-            <el-menu-item index="/teacher/application/labor/achievement">
-              成果性评价（上限10分）
-            </el-menu-item>
-          </el-sub-menu>
-
-          <!-- 创新素养 -->
-          <el-sub-menu index="innovation">
-            <template #title>创新素养（上限45分）</template>
-            <el-menu-item index="/teacher/application/innovation/basic">
-              基础素养（上限5分）
-            </el-menu-item>
-            <el-menu-item index="/teacher/application/innovation/achievement">
-              突破提升（上限40分）
-            </el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/teacher/tokens" @click="go('/teacher/tokens')">
+            令牌管理
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
@@ -98,6 +72,10 @@ const route = useRoute()
 
 const user = computed(() => authStore.user)
 const activeMenu = computed(() => route.path)
+
+const go = (path) => {
+  router.push(path)
+}
 
 const handleLogout = () => {
   router.push({ name: 'Login' })
