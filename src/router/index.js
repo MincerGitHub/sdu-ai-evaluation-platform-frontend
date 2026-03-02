@@ -86,6 +86,16 @@ const router = createRouter({
           component: () => import('@/views/dashboard/TeacherDashboard.vue'),
         },
         {
+          path: 'statistics',
+          name: 'TeacherStatistics',
+          component: () => import('@/views/application/TeacherStatisticsPage.vue'),
+        },
+        {
+          path: 'all-applications',
+          name: 'TeacherAllApplications',
+          component: () => import('@/views/application/TeacherAllApplicationsPage.vue'),
+        },
+        {
           path: 'application/:category/:subType',
           name: 'TeacherApplication',
           component: () => import('@/views/application/ReviewApplicationPage.vue'),
@@ -109,6 +119,16 @@ const router = createRouter({
           path: 'appeals',
           name: 'TeacherAppealProcess',
           component: () => import('@/views/announcement/AppealProcessPage.vue'),
+        },
+        {
+          path: 'export',
+          name: 'TeacherExport',
+          component: () => import('@/views/archive/ExportPage.vue'),
+        },
+        {
+          path: 'archive',
+          name: 'TeacherArchive',
+          component: () => import('@/views/archive/ArchivePage.vue'),
         },
         // ...else
       ],

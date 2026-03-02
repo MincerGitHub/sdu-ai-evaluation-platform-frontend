@@ -6,11 +6,11 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item index="/teacher/tokens">
-            令牌管理
+          <el-menu-item index="/teacher/export">
+            导出
           </el-menu-item>
-          <el-menu-item index="/teacher/appeals">
-            申诉列表
+          <el-menu-item index="/teacher/archive">
+            归档
           </el-menu-item>
           <el-menu-item index="/teacher/announcement">
             公示
@@ -78,6 +78,18 @@
               突破提升（上限40分）
             </el-menu-item>
           </el-sub-menu>
+          <el-sub-menu index="teacher-application">
+            <template #title>申报总览</template>
+            <el-menu-item index="/teacher/statistics">
+              申报统计
+            </el-menu-item>
+            <el-menu-item index="/teacher/all-applications">
+              全部申报
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item index="/teacher/tokens">
+            令牌管理
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">
