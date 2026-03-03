@@ -123,7 +123,7 @@ const router = createRouter({
         {
           path: 'export',
           name: 'TeacherExport',
-          component: () => import('@/views/archive/ExportPage.vue'),
+          component: () => import('@/views/teacher/TeacherExportPage.vue'),
         },
         {
           path: 'archive',
