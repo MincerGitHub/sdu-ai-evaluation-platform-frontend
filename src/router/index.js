@@ -128,7 +128,7 @@ const router = createRouter({
         {
           path: 'archive',
           name: 'TeacherArchive',
-          component: () => import('@/views/archive/ArchivePage.vue'),
+          component: () => import('@/views/teacher/AnnouncementManagePage.vue'),
         },
         // ...else
       ],
