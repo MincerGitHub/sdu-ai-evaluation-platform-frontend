@@ -6,7 +6,6 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-<<<<<<< Updated upstream
           <el-menu-item index="/teacher/export">
             导出
           </el-menu-item>
