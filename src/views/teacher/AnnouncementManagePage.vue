@@ -5,14 +5,30 @@
     <el-card class="archive-card">
       <div class="section-header">
         <h3>归档列表</h3>
-        <el-button class="refresh-button" @click="fetchArchives">刷新</el-button>
+        <div class="section-actions">
+          <el-input
+            v-model.trim="archiveFilters.keyword"
+            placeholder="搜索学期/年级/归档名称"
+            clearable
+            style="width: 220px"
+          />
+          <el-select v-model="archiveFilters.grade" placeholder="年级" clearable style="width: 120px">
+            <el-option v-for="item in gradeOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="archiveFilters.announced" placeholder="公示状态" clearable style="width: 140px">
+            <el-option label="已公示" value="announced" />
+            <el-option label="未公示" value="pending" />
+          </el-select>
+          <el-button class="refresh-button" @click="fetchArchives">刷新</el-button>
+        </div>
       </div>
 
       <el-table
-        :data="archives"
+        :data="paginatedArchives"
         border
         v-loading="loadingArchives"
         empty-text="暂无归档记录"
+        :height="archiveTableHeight"
       >
         <el-table-column prop="term" label="学期" min-width="140" />
         <el-table-column prop="grade" label="年级" width="120" />
@@ -30,7 +46,7 @@
         </el-table-column>
         <el-table-column label="下载" width="120">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleDownload(row)">下载</el-button>
+            <el-button link type="success" @click="handleDownload(row)">下载</el-button>
           </template>
         </el-table-column>
         <el-table-column label="公示" width="120">
@@ -46,17 +62,56 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="pagination-wrap">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="archivePagination.page"
+          :page-size="archivePagination.size"
+          :total="archivePagination.total"
+          :page-sizes="pageSizeOptions"
+          @current-change="handleArchivePageChange"
+          @size-change="handleArchiveSizeChange"
+        />
+      </div>
+    </el-card>
 
-      <div class="section-header section-spacing">
+    <el-card class="announcement-card">
+      <div class="section-header">
         <h3>公示管理</h3>
-        <el-button class="submit-button" @click="openCreateDialog(null)">新建公示</el-button>
+        <div class="section-actions">
+          <el-input
+            v-model.trim="announcementFilters.keyword"
+            placeholder="搜索标题/年级/班级"
+            clearable
+            style="width: 220px"
+          />
+          <el-select v-model="announcementFilters.grade" placeholder="年级" clearable style="width: 120px">
+            <el-option v-for="item in gradeOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="announcementFilters.status" placeholder="状态" clearable style="width: 120px">
+            <el-option label="进行中" value="active" />
+            <el-option label="已结束" value="closed" />
+          </el-select>
+          <el-date-picker
+            v-model="announcementFilters.dateRange"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            unlink-panels
+            clearable
+            style="width: 260px"
+          />
+          <el-button class="submit-button" @click="openCreateDialog(null)">新建公示</el-button>
+        </div>
       </div>
 
       <el-table
-        :data="filteredAnnouncements"
+        :data="paginatedAnnouncements"
         border
         v-loading="loadingAnnouncements"
         empty-text="暂无公示记录"
+        :height="announcementTableHeight"
       >
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
         <el-table-column label="范围" min-width="180">
@@ -81,7 +136,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="220">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEditDialog(row)">编辑</el-button>
             <el-button
@@ -96,10 +151,34 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-wrap">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="announcementPagination.page"
+          :page-size="announcementPagination.size"
+          :total="announcementPagination.total"
+          :page-sizes="pageSizeOptions"
+          @current-change="handleAnnouncementPageChange"
+          @size-change="handleAnnouncementSizeChange"
+        />
+      </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      :width="dialogWidth"
+      class="announcement-dialog"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        :label-width="dialogLabelWidth"
+        :label-position="dialogLabelPosition"
+      >
         <el-form-item label="公示标题" prop="title">
           <el-input v-model.trim="form.title" maxlength="50" show-word-limit placeholder="请输入公示标题" />
         </el-form-item>
@@ -179,7 +258,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import archiveService from '@/services/archiveService'
@@ -218,8 +297,43 @@ const rules = {
   showFields: [{ type: 'array', required: true, message: '请选择展示字段', trigger: 'change' }],
 }
 
-const gradeOptions = ref([])
 const classOptions = ref([])
+
+const archiveFilters = reactive({
+  keyword: '',
+  grade: '',
+  announced: '',
+})
+
+const announcementFilters = reactive({
+  keyword: '',
+  grade: '',
+  status: '',
+  dateRange: [],
+})
+
+const archivePagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0,
+})
+
+const announcementPagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0,
+})
+
+const pageSizeOptions = [10, 20, 50]
+
+const windowWidth = ref(typeof window === 'undefined' ? 1200 : window.innerWidth)
+const windowHeight = ref(typeof window === 'undefined' ? 900 : window.innerHeight)
+
+const updateWindowSize = () => {
+  if (typeof window === 'undefined') return
+  windowWidth.value = window.innerWidth
+  windowHeight.value = window.innerHeight
+}
 
 const showFieldOptions = [
   { label: '姓名', value: 'name' },
@@ -229,6 +343,20 @@ const showFieldOptions = [
 ]
 
 const dialogTitle = computed(() => (dialogMode.value === 'edit' ? '编辑公示' : '新建公示'))
+const dialogWidth = computed(() => {
+  if (windowWidth.value < 640) return '94vw'
+  if (windowWidth.value < 900) return '88vw'
+  return '720px'
+})
+const dialogLabelWidth = computed(() => (windowWidth.value < 640 ? '90px' : '110px'))
+const dialogLabelPosition = computed(() => (windowWidth.value < 640 ? 'top' : 'left'))
+
+const archiveTableHeight = computed(() =>
+  Math.max(260, Math.min(420, Math.round(windowHeight.value * 0.32)))
+)
+const announcementTableHeight = computed(() =>
+  Math.max(300, Math.min(520, Math.round(windowHeight.value * 0.4)))
+)
 
 const archiveOptions = computed(() =>
   archives.value.map((item) => ({
@@ -237,14 +365,101 @@ const archiveOptions = computed(() =>
   }))
 )
 
+const gradeOptions = computed(() => {
+  const set = new Set()
+  archives.value.forEach((item) => {
+    if (item?.grade) set.add(String(item.grade))
+  })
+  announcements.value.forEach((item) => {
+    const scopeGrade = item?.scope?.grade ?? item?.grade
+    if (scopeGrade) set.add(String(scopeGrade))
+  })
+  return Array.from(set).sort((a, b) => Number(a) - Number(b))
+})
+
 const filteredAnnouncements = computed(() => {
   const list = announcements.value
-  if (!currentUserId.value) return list
+  const keyword = announcementFilters.keyword.trim().toLowerCase()
+  const gradeFilter = announcementFilters.grade
+  const statusFilter = announcementFilters.status
+  const [rangeStart, rangeEnd] = Array.isArray(announcementFilters.dateRange)
+    ? announcementFilters.dateRange
+    : []
+
   return list.filter((item) => {
-    if (item?.created_by) return item.created_by === currentUserId.value
-    if (item?.teacher_id) return item.teacher_id === currentUserId.value
+    if (currentUserId.value) {
+      if (item?.created_by && item.created_by !== currentUserId.value) return false
+      if (item?.teacher_id && item.teacher_id !== currentUserId.value) return false
+    }
+
+    const scope = item?.scope || {}
+    const rowGrade = scope.grade ?? item?.grade
+    const rowClassIds = scope.class_ids || item?.class_ids || []
+
+    if (gradeFilter && String(rowGrade) !== String(gradeFilter)) return false
+
+    if (statusFilter) {
+      const closed = isAnnouncementClosed(item)
+      if (statusFilter === 'active' && closed) return false
+      if (statusFilter === 'closed' && !closed) return false
+    }
+
+    if (rangeStart && rangeEnd) {
+      const startTime = new Date(rangeStart).getTime()
+      const endTime = new Date(rangeEnd).getTime()
+      const rowStart = item?.start_at ? new Date(item.start_at).getTime() : null
+      const rowEnd = item?.end_at ? new Date(item.end_at).getTime() : null
+      if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return true
+      if (!Number.isFinite(rowStart) || !Number.isFinite(rowEnd)) return false
+      if (rowEnd < startTime || rowStart > endTime) return false
+    }
+
+    if (keyword) {
+      const fields = [
+        item?.title,
+        item?.archive_id,
+        rowGrade ? `${rowGrade}` : '',
+        Array.isArray(rowClassIds) ? rowClassIds.join(',') : '',
+      ]
+      const haystack = fields.filter(Boolean).join(' ').toLowerCase()
+      if (!haystack.includes(keyword)) return false
+    }
+
     return true
   })
+})
+
+const filteredArchives = computed(() => {
+  const keyword = archiveFilters.keyword.trim().toLowerCase()
+  return archives.value.filter((item) => {
+    if (archiveFilters.grade && String(item?.grade) !== String(archiveFilters.grade)) return false
+    if (archiveFilters.announced) {
+      const isAnnounced = Boolean(item?.is_announced)
+      if (archiveFilters.announced === 'announced' && !isAnnounced) return false
+      if (archiveFilters.announced === 'pending' && isAnnounced) return false
+    }
+    if (keyword) {
+      const fields = [
+        item?.archive_name,
+        item?.archive_id,
+        item?.term,
+        item?.grade,
+      ]
+      const haystack = fields.filter(Boolean).join(' ').toLowerCase()
+      if (!haystack.includes(keyword)) return false
+    }
+    return true
+  })
+})
+
+const paginatedArchives = computed(() => {
+  const start = (archivePagination.page - 1) * archivePagination.size
+  return filteredArchives.value.slice(start, start + archivePagination.size)
+})
+
+const paginatedAnnouncements = computed(() => {
+  const start = (announcementPagination.page - 1) * announcementPagination.size
+  return filteredAnnouncements.value.slice(start, start + announcementPagination.size)
 })
 
 const normalizeListData = (data) => {
@@ -563,9 +778,73 @@ watch(
   }
 )
 
+watch(
+  archiveFilters,
+  () => {
+    archivePagination.page = 1
+  },
+  { deep: true }
+)
+
+watch(
+  announcementFilters,
+  () => {
+    announcementPagination.page = 1
+  },
+  { deep: true }
+)
+
+watch(
+  () => filteredArchives.value.length,
+  (total) => {
+    archivePagination.total = total
+    const maxPage = Math.max(1, Math.ceil(total / archivePagination.size))
+    if (archivePagination.page > maxPage) archivePagination.page = 1
+  },
+  { immediate: true }
+)
+
+watch(
+  () => filteredAnnouncements.value.length,
+  (total) => {
+    announcementPagination.total = total
+    const maxPage = Math.max(1, Math.ceil(total / announcementPagination.size))
+    if (announcementPagination.page > maxPage) announcementPagination.page = 1
+  },
+  { immediate: true }
+)
+
+const handleArchivePageChange = (page) => {
+  archivePagination.page = page
+}
+
+const handleArchiveSizeChange = (size) => {
+  archivePagination.size = size
+  archivePagination.page = 1
+}
+
+const handleAnnouncementPageChange = (page) => {
+  announcementPagination.page = page
+}
+
+const handleAnnouncementSizeChange = (size) => {
+  announcementPagination.size = size
+  announcementPagination.page = 1
+}
+
 onMounted(() => {
+  updateWindowSize()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateWindowSize)
+  }
   fetchArchives()
   fetchAnnouncements()
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateWindowSize)
+  }
 })
 </script>
 
@@ -576,6 +855,7 @@ onMounted(() => {
   font-size: clamp(16px, 1.4vw, 20px);
   display: flex;
   flex-direction: column;
+  gap: 20px;
   margin: 0 auto;
   padding: 0 12px;
   overflow: hidden;
@@ -600,7 +880,19 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.archive-card :deep(.el-card__body) {
+.announcement-card {
+  flex: 1;
+  width: 100%;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.archive-card :deep(.el-card__body),
+.announcement-card :deep(.el-card__body) {
   padding: 0;
   height: 100%;
   display: flex;
@@ -612,7 +904,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border-bottom: 1px solid #dcdfe6;
+  flex-wrap: wrap;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .section-header h3 {
@@ -665,6 +967,18 @@ onMounted(() => {
 
   .section-header {
     padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pagination-wrap {
+    padding: 12px 16px 16px;
+    justify-content: center;
   }
 }
 
@@ -676,5 +990,14 @@ onMounted(() => {
   .section-header {
     padding: 12px 12px;
   }
+
+  .pagination-wrap {
+    padding: 12px 12px 16px;
+  }
 }
 </style>
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 24px 16px 60px;
+}
