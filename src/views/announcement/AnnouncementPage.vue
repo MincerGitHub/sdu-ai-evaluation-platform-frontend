@@ -1,7 +1,8 @@
 <template>
   <div class="announcement-page">
-    <h2 class="page-title">公示</h2>
-
+    <header class="page-header">
+      <h2>公示</h2>
+    </header>
     <div v-loading="loading" class="download-list">
       <template v-if="downloadItems.length">
         <a v-for="item in downloadItems" :key="item.id" :href="item.url" class="download-link" target="_blank"

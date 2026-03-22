@@ -10,7 +10,35 @@ const APPLICATION_STATUSES = {
     APPROVED: 'approved',
     REJECTED: 'rejected',
     ARCHIVED: 'archived',
-    WITHDRAWN: 'withdrawn',
+    WITHDRAWN: 'withdrawn', // 撤回状态没用到
+};
+
+// 统一的状态元信息（文案 + tag 样式）
+const APPLICATION_STATUS_META = {
+    pending_ai: {
+        label: '待AI评价',
+        tagType: 'info',
+    },
+    pending_review: {
+        label: '待审核',
+        tagType: 'warning',
+    },
+    approved: {
+        label: '已通过',
+        tagType: 'success',
+    },
+    rejected: {
+        label: '已驳回',
+        tagType: 'danger',
+    },
+    archived: {
+        label: '已归档',
+        tagType: 'info',
+    },
+    withdrawn: {
+        label: '已撤回',
+        tagType: 'default',
+    }
 };
 
 const ERROR_CODES = {
@@ -31,5 +59,6 @@ const ERROR_CODES = {
 export {
     ROLES,
     APPLICATION_STATUSES,
+    APPLICATION_STATUS_META,
     ERROR_CODES,
 };

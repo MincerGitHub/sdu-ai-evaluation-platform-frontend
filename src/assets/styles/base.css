@@ -1,3 +1,17 @@
+:root {
+    /* 主色 */
+    --el-color-primary: #9C0C13;
+  
+    /* 可选：根据需求微调不同深浅色 */
+    --el-color-primary-dark-2: #6e080e;
+  
+    --el-color-primary-light-3: #c13a40;
+    --el-color-primary-light-5: #d96a6f;
+    --el-color-primary-light-7: #e79a9d;
+    --el-color-primary-light-8: #f0b8ba;
+    --el-color-primary-light-9: #f8dbdc;
+}
+
 body {
     margin: 0;
     font-family: 'Microsoft YaHei', sans-serif;
@@ -15,11 +29,47 @@ body {
     justify-content: space-between;
     padding: 0 20px;
     box-sizing: border-box;
+    background-color: #9C0C13;
+    color: #ffffff;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
+/* 顶部菜单容器 */
+.header-menu.el-menu--horizontal {
+    border-bottom: none;
+    background-color: transparent;
+}
+
+/* 顶部菜单 - 默认文字白色（含自定义 span），用 !important 覆盖主题色 */
+.header-menu .el-menu-item,
+.header-menu .el-sub-menu__title,
+.header-menu span {
+    color: #ffffff;
+}
+
+/* 顶部菜单 - 悬停状态 */
+.header-menu .el-menu-item:hover,
+.header-menu .el-sub-menu:not(.is-disabled):hover > .el-sub-menu__title {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+/* 顶部菜单 - 选中 / 打开状态（防止 Element Plus 用主色） */
+.header-menu .el-menu-item.is-active,
+.header-menu .el-sub-menu.is-active > .el-sub-menu__title{
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+    border-bottom: 2px solid #ffd6d8;
+}
+
+/* 顶部菜单下拉面板保持白底、深色字 */
+.header-menu .el-sub-menu__popper {
+    background-color: #ffffff;
+}
+.header-menu .el-sub-menu__popper .el-menu-item {
+    color: #333333;
+}
+.header-menu .el-sub-menu__popper .el-menu-item:hover {
+    background-color: #f5f5f5;
 }
 
 /* - 右侧导航区 */
@@ -29,18 +79,16 @@ body {
     gap: 8px;
 }
 
-.header-menu {
-    border-bottom: none;
-}
-
 /* - 侧边栏 */
 .layout-sidebar {
     box-sizing: border-box;
     width: 260px;
+    background-color: #f5f5f5; /* 浅灰背景 */
 }
 
 .sidebar-menu {
     border-right: none;
+    background-color: transparent;
 }
 
 /* - 主内容区域 */

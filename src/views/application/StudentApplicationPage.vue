@@ -1,18 +1,33 @@
 <template>
-    <div class="application-page">
-        <div class="page-header">
-            <h2>{{ pageTitle }}</h2>
-            <el-button type="primary" @click="openCreate">新建申报</el-button>
-        </div>
-        <!-- 表格 -->
-        <ApplicationTable @edit="openEdit" />
-        <!-- 新建弹窗 -->
-        <ApplicationFormDialog ref="createDialogRef" mode="create" :cascader-options="cascaderOptions"
-            :category="category" :sub-type="subType" @success="refresh" />
-        <!-- 修改弹窗 -->
-        <ApplicationFormDialog ref="editDialogRef" mode="edit" :initial-data="editingRow"
-            :cascader-options="cascaderOptions" :category="category" :sub-type="subType" @success="refresh" />
-    </div>
+  <div class="application-page page-container">
+    <header class="page-header">
+      <h2>{{ pageTitle }}</h2>
+    </header>
+
+    <ApplicationTable @edit="openEdit">
+      <template #toolbar-right>
+        <el-button class="btn-main" @click="openCreate">新建申报</el-button>
+      </template>
+    </ApplicationTable>
+
+    <ApplicationFormDialog
+      ref="createDialogRef"
+      mode="create"
+      :cascader-options="cascaderOptions"
+      :category="category"
+      :sub-type="subType"
+      @success="refresh"
+    />
+    <ApplicationFormDialog
+      ref="editDialogRef"
+      mode="edit"
+      :initial-data="editingRow"
+      :cascader-options="cascaderOptions"
+      :category="category"
+      :sub-type="subType"
+      @success="refresh"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -87,19 +102,5 @@ watch([category, subType], initPage)
 </script>
 
 <style scoped>
-.application-page {
-    padding: 16px;
-}
-
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.page-header h2 {
-    margin: 0;
-    font-size: 18px;
-}
+/* 页面本身不再自定义 header 样式，统一使用 table.css 中的 .page-header/.page-title */
 </style>

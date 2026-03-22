@@ -1,53 +1,59 @@
 <template>
-    <el-dialog v-model="visible" :title="dialogTitle" width="600px" destroy-on-close>
-        <div v-loading="loading">
-            <template v-if="detail">
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="学生姓名">{{ detail.student?.name }}</el-descriptions-item>
-                    <el-descriptions-item label="学号">{{ detail.student?.account }}</el-descriptions-item>
-                    <el-descriptions-item label="班级ID">{{ detail.student?.class_id }}</el-descriptions-item>
-                    <el-descriptions-item label="状态">
-                        <el-tag :type="statusTagType(detail.status)" size="small">
-                            {{ statusLabel(detail.status) }}
-                        </el-tag>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="申报标题" :span="2">{{ detail.title }}</el-descriptions-item>
-                    <el-descriptions-item label="申报项目" :span="2">
-                        <el-cascader v-model="awardPath" :options="cascaderOptions"
-                            :props="{ checkStrictly: false, emitPath: true }" clearable style="width: 100%"
-                            placeholder="请选择申报项目" @change="handleAwardChange" />
-                    </el-descriptions-item>
-                    <el-descriptions-item label="分数">{{ detail.score }}</el-descriptions-item>
-                    <el-descriptions-item label="发生日期">{{ detail.occurred_at }}</el-descriptions-item>
-                    <el-descriptions-item label="参考分">{{ currentScoreInfo?.score ?? '—' }}</el-descriptions-item>
-                    <el-descriptions-item label="最高分">{{ currentScoreInfo?.maxScore ?? '—' }}</el-descriptions-item>
-                    <el-descriptions-item label="描述" :span="2">{{ detail.description }}</el-descriptions-item>
-                    <el-descriptions-item label="附件" :span="2">
-                        <div v-if="!attachments.length">无</div>
-                        <ul v-else>
-                            <li v-for="file in attachments" :key="file.file_id">
-                                <a :href="file.url" target="_blank" download>{{ file.name }}</a>
-                            </li>
-                        </ul>
-                    </el-descriptions-item>
-                </el-descriptions>
+  <el-dialog v-model="visible" :title="dialogTitle" width="600px" destroy-on-close>
+    <div v-loading="loading">
+      <template v-if="detail">
+        <el-descriptions :column="2" border class="dialog-descriptions">
+          <el-descriptions-item label="学生姓名">{{ detail.student?.name }}</el-descriptions-item>
+          <el-descriptions-item label="学号">{{ detail.student?.account }}</el-descriptions-item>
+          <el-descriptions-item label="班级ID">{{ detail.student?.class_id }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="statusTagType(detail.status)" size="small">
+              {{ statusLabel(detail.status) }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="申报标题" :span="2">{{ detail.title }}</el-descriptions-item>
+          <el-descriptions-item label="申报项目" :span="2">
+            <el-cascader v-model="awardPath" :options="cascaderOptions"
+              :props="{ checkStrictly: false, emitPath: true }" clearable style="width: 100%"
+              placeholder="请选择申报项目" @change="handleAwardChange" />
+          </el-descriptions-item>
+          <el-descriptions-item label="分数">{{ detail.score }}</el-descriptions-item>
+          <el-descriptions-item label="发生日期">{{ detail.occurred_at }}</el-descriptions-item>
+          <el-descriptions-item label="参考分">{{ currentScoreInfo?.score ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="最高分">{{ currentScoreInfo?.maxScore ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="描述" :span="2">{{ detail.description }}</el-descriptions-item>
+          <el-descriptions-item label="附件" :span="2">
+            <div v-if="!attachments.length">无</div>
+            <ul v-else>
+              <li v-for="file in attachments" :key="file.file_id">
+                <a :href="file.url" target="_blank" download>{{ file.name }}</a>
+              </li>
+            </ul>
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+    </div>
 
-                <!-- 审核操作区 -->
-                <div class="decision-area" v-if="canDecide">
-                    <el-divider />
-                    <el-form :model="form" label-width="80px">
-                        <el-form-item label="审核意见">
-                            <el-input v-model="form.comment" type="textarea" :rows="2" placeholder="请输入审核意见" />
-                        </el-form-item>
-                    </el-form>
-                    <div class="decision-buttons">
-                        <el-button type="success" @click="handleDecision('approved')">通过</el-button>
-                        <el-button type="danger" @click="handleDecision('rejected')">驳回</el-button>
-                    </div>
-                </div>
-            </template>
+    <template #footer>
+      <div class="dialog-section">
+        <el-form :model="form" label-width="80px" class="dialog-form-block">
+          <el-form-item label="审核意见">
+            <el-input
+              v-model="form.comment"
+              type="textarea"
+              :rows="2"
+              placeholder="请输入审核意见"
+            />
+          </el-form-item>
+        </el-form>
+        <div class="dialog-footer-actions">
+          <el-button text @click="visible = false">返回</el-button>
+          <el-button type="success" @click="handleDecision('approved')">通过</el-button>
+          <el-button type="danger" plain @click="handleDecision('rejected')">驳回</el-button>
         </div>
-    </el-dialog>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -56,6 +62,7 @@ import { ElMessage } from 'element-plus'
 import { useReviewStore } from '@/stores/review'
 import { getScoreInfoByUid, findCascaderPathByUid, getCascaderOptions } from '@/utils/dealAwardUid'
 import fileService from '@/services/fileService'
+import { APPLICATION_STATUS_META } from '@/utils/constants'
 
 const store = useReviewStore()
 
@@ -69,10 +76,6 @@ const form = ref({
 })
 
 const dialogTitle = computed(() => detail.value ? `审核详情 #${detail.value.id}` : '审核详情')
-
-const canDecide = computed(() => {
-    return detail.value && ['pending_review', 'pending_teacher'].includes(detail.value.status)
-})
 
 // 申报项目路径
 const awardPathLabel = ref('')
@@ -97,6 +100,7 @@ async function open(applicationId) {
         const result = await store.fetchDetail(applicationId)
         if (result.success) {
             detail.value = result.data
+            form.value.comment = detail.value.comment || ''
             // 加载 cascader options
             cascaderOptions.value = getCascaderOptions(detail.value.category, detail.value.sub_type)
             // 设置初始路径
@@ -163,27 +167,21 @@ function handleAwardChange(val) {
 }
 
 function statusTagType(status) {
-    const map = { pending_review: 'warning', pending_teacher: 'info', approved: 'success', rejected: 'danger' }
-    return map[status] || ''
+    const meta = APPLICATION_STATUS_META[status]
+    return meta?.tagType || 'info'
 }
 
 function statusLabel(status) {
-    const map = { pending_review: '待审核', pending_teacher: '待教师复核', approved: '已通过', rejected: '已驳回' }
-    return map[status] || status
+    const meta = APPLICATION_STATUS_META[status]
+    return meta?.label || status || '-'
 }
 
 defineExpose({ open })
 </script>
 
 <style scoped>
+/* 占位，防止潜在旧引用 */
 .decision-area {
-    margin-top: 16px;
-}
-
-.decision-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 12px;
+  margin-top: 16px;
 }
 </style>

@@ -1,0 +1,207 @@
+/* 页面基础布局：表格列表页通用 */
+.page-container {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px 20px;
+  }
+  
+  /* 页面头部：只负责整体间距，标题直接用 h2 默认样式 */
+  .page-header {
+    margin-bottom: 12px;
+  }
+  
+  /* 表格整体块：table + pagination 一起，分页统一右下角 */
+  .table-block {
+    width: 100%;
+    margin-top: 8px; /* 与 toolbar 之间的间距 */
+  }
+  
+  /* 表格工具栏：标题与表格之间的统一 toolbar */
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px; /* 与 table-block 之间的间距 */
+  }
+  
+  /* 左侧区域只放摘要（如“待审核 X 条”），不放操作控件 */
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  
+  /* 右侧区域放所有操作控件：按钮 / 选择器 / 输入框等
+     从右向左排布：通过 row-reverse 控制视觉顺序 */
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-direction: row-reverse;
+    gap: 8px; /* 控制按钮/选择器之间的间距 */
+  }
+  
+  /* 表格基础样式统一 */
+  .page-container :deep(.el-table) {
+    width: 100%;
+    font-size: 14px;
+  }
+  
+  .page-container :deep(.el-table th) {
+    background-color: #f5f7fa;
+  }
+  
+  .page-container :deep(.el-table .cell) {
+    padding: 8px 10px;
+  }
+  
+  /* 表格包裹层（可选） */
+  .table-wrapper {
+    width: 100%;
+  }
+  
+  /* “链接式”按钮在表格中的统一样式 */
+  .page-container :deep(.el-button.is-link) {
+    padding: 0 6px;
+  }
+  
+  /* 分页容器：统一放在表格右下角（放在 .table-block 内部） */
+  .pagination-wrap {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  /* 统一按钮风格 */
+  .btn-main {
+    background-color: #b71c1c;
+    border-color: #b71c1c;
+    color: #fff;
+  }
+  
+  .btn-main:hover,
+  .btn-main:focus {
+    background-color: #a31818;
+    border-color: #a31818;
+    color: #fff;
+  }
+  
+  .btn-plain {
+    background-color: #fff;
+    border-color: #dcdfe6;
+    color: #606266;
+  }
+  
+  .btn-plain:hover,
+  .btn-plain:focus {
+    background-color: #f5f7fa;
+    border-color: #c0c4cc;
+    color: #303133;
+  }
+  
+  .btn-danger {
+    background-color: #fff;
+    border-color: #f56c6c;
+    color: #f56c6c;
+  }
+  
+  .btn-danger:hover,
+  .btn-danger:focus {
+    background-color: #fef0f0;
+    border-color: #f78989;
+    color: #f56c6c;
+  }
+  
+  /* 统一 tag 颜色（可按需附加到 el-tag 上） */
+  .tag-success {
+    --el-tag-bg-color: #f0f9eb;
+    --el-tag-border-color: #e1f3d8;
+    --el-tag-text-color: #67c23a;
+  }
+  
+  .tag-info {
+    --el-tag-bg-color: #f4f4f5;
+    --el-tag-border-color: #e9e9eb;
+    --el-tag-text-color: #909399;
+  }
+  
+  .tag-warning {
+    --el-tag-bg-color: #fdf6ec;
+    --el-tag-border-color: #faecd8;
+    --el-tag-text-color: #e6a23c;
+  }
+  
+  .tag-danger {
+    --el-tag-bg-color: #fef0f0;
+    --el-tag-border-color: #fde2e2;
+    --el-tag-text-color: #f56c6c;
+  }
+  
+  /* 对话框底部布局 */
+  .dialog-footer-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  
+  .dialog-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  
+  /* 审核类详情弹窗：内容区域 */
+  .dialog-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .dialog-descriptions {
+    margin-bottom: 4px;
+  }
+  
+  .dialog-form-block {
+    margin-top: 8px;
+  }
+  
+  /* 小型批量操作条（如 ReviewTable 批量操作） */
+  .batch-bar {
+    margin-top: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  
+  .batch-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* 响应式优化 */
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 12px 14px;
+    }
+  
+    .page-header {
+      margin-bottom: 8px;
+    }
+  
+    .table-toolbar {
+      align-items: flex-start;
+    }
+  
+    .toolbar-right {
+      flex-direction: row-reverse;
+      gap: 6px;
+    }
+  }
+  

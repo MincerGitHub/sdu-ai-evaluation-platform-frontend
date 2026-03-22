@@ -1,12 +1,18 @@
 <template>
-  <div class="appeal-page">
-    <el-card v-if="!isCreateMode" class="appeal-list-card">
-      <template #header>
-        <div class="card-header">
-          <span>我的申诉</span>
-          <el-button type="primary" @click="enterCreateMode">+ 新建</el-button>
+  <div class="page-container appeal-page">
+    <template v-if="!isCreateMode">
+      <header class="page-header">
+        <h2>我的申诉</h2>
+      </header>
+
+      <div class="table-toolbar">
+        <div class="toolbar-left">
+          <!-- 统计：如 共 {{ appealList.length }} 条 -->
         </div>
-      </template>
+        <div class="toolbar-right">
+          <el-button class="btn-main" @click="enterCreateMode">+ 新建</el-button>
+        </div>
+      </div>
 
       <el-table :data="appealList" v-loading="loading" empty-text="暂无申诉记录">
         <el-table-column prop="content" label="内容" min-width="420" />
@@ -17,21 +23,19 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="查看 删除" width="160">
+        <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">查看</el-button>
             <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </template>
 
-    <el-card v-else class="appeal-create-card">
-      <template #header>
-        <div class="card-header">
-          <span>新建申诉</span>
-        </div>
-      </template>
+    <template v-else>
+      <header class="page-header">
+        <h2>新建申诉</h2>
+      </header>
 
       <el-form :model="form" label-width="100px">
         <el-form-item label="公示" required>
@@ -75,11 +79,11 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="submitAppeal">提交</el-button>
-          <el-button @click="cancelCreate">返回</el-button>
+          <el-button class="btn-main" :loading="submitting" @click="submitAppeal">提交</el-button>
+          <el-button class="btn-plain" @click="cancelCreate">返回</el-button>
         </el-form-item>
       </el-form>
-    </el-card>
+    </template>
 
     <el-dialog v-model="detailVisible" title="申诉详情" width="680px">
       <div v-if="currentAppeal" class="detail-wrap">
@@ -355,7 +359,6 @@ onMounted(async () => {
 <style scoped>
 .appeal-page {
   width: 100%;
-  padding: 16px;
   box-sizing: border-box;
 }
 
@@ -389,12 +392,14 @@ onMounted(async () => {
   border-radius: 6px;
 }
 
-.attachment-item a {
+.attachment-item a,
+.detail-attachment-list a {
   color: #409eff;
   text-decoration: none;
 }
 
-.attachment-item a:hover {
+.attachment-item a:hover,
+.detail-attachment-list a:hover {
   text-decoration: underline;
 }
 
@@ -420,14 +425,5 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.detail-attachment-list a {
-  color: #409eff;
-  text-decoration: none;
-}
-
-.detail-attachment-list a:hover {
-  text-decoration: underline;
 }
 </style>

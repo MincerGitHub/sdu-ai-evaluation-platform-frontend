@@ -51,8 +51,10 @@
         </el-form>
 
         <template #footer>
-            <el-button type="primary" text @click="handleClose">返回</el-button>
-            <el-button type="primary" :loading="loading" @click="handleSubmit">提交</el-button>
+            <div class="dialog-footer-row">
+                <el-button text @click="handleClose">返回</el-button>
+                <el-button type="primary" :loading="loading" @click="handleSubmit">提交</el-button>
+            </div>
         </template>
     </el-dialog>
 </template>

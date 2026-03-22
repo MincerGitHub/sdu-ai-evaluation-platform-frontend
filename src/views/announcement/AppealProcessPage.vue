@@ -1,8 +1,16 @@
 <template>
-  <div class="appeal-process-page">
-    <div class="page-header">
+  <div class="page-container appeal-process-page">
+    <header class="page-header">
       <h2>申诉列表</h2>
-      <div class="header-actions">
+    </header>
+
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <!-- 待处理统计等 -->
+      </div>
+      <div class="toolbar-right">
+        <el-button class="btn-main" @click="exportList">导出</el-button>
+        <el-button class="btn-plain" @click="refreshList">刷新</el-button>
         <el-select
           v-model="statusFilter"
           placeholder="状态筛选"
@@ -13,60 +21,54 @@
           <el-option label="待处理" value="pending" />
           <el-option label="已处理" value="processed" />
         </el-select>
-        <el-button @click="refreshList">刷新</el-button>
-        <el-button @click="exportList">导出</el-button>
       </div>
     </div>
 
-    <el-table
-      :data="store.list"
-      border
-      stripe
-      v-loading="store.loading"
-      empty-text="暂无申诉记录"
-    >
-      <el-table-column prop="student_name" label="学生" width="120" />
-      <el-table-column prop="content" label="申诉内容" min-width="420" show-overflow-tooltip />
-      <el-table-column label="证明材料" width="120">
-        <template #default="{ row }">
-          <span v-if="!normalizeAttachments(row).length">无</span>
-          <el-button v-else link type="primary" @click="openProcess(row)">查看</el-button>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="120">
-        <template #default="{ row }">
-          <el-tag :type="getStatusTagType(row)" size="small">{{ getStatusText(row) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="160">
-        <template #default="{ row }">
-          <el-button
-            v-if="row.status !== 'processed'"
-            link
-            type="primary"
-            @click="openProcess(row)"
-          >
-            处理申诉
-          </el-button>
-          <el-button v-else link type="info" @click="openProcess(row)">查看结果</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-block">
+      <el-table
+        :data="store.list"
+        border
+        stripe
+        v-loading="store.loading"
+        empty-text="暂无申诉记录"
+      >
+        <el-table-column prop="student_name" label="学生" width="120" />
+        <el-table-column prop="content" label="申诉内容" min-width="420" show-overflow-tooltip />
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row)" size="small">{{ getStatusText(row) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status !== 'processed'"
+              link
+              type="primary"
+              @click="openProcess(row)"
+            >
+              处理申诉
+            </el-button>
+            <el-button v-else link type="info" @click="openProcess(row)">查看结果</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <div class="pagination-wrap">
-      <el-pagination
-        background
-        layout="prev, pager, next, total"
-        :total="store.total"
-        :page-size="store.query.size"
-        :current-page="store.query.page"
-        @current-change="handlePageChange"
-      />
+      <div class="pagination-wrap">
+        <el-pagination
+          background
+          layout="total, prev, pager, next"
+          :total="store.total"
+          :page-size="store.query.size"
+          :current-page="store.query.page"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
 
     <el-dialog v-model="processDialogVisible" title="处理申诉" width="760px">
-      <div v-if="selectedAppeal" class="dialog-content">
-        <el-descriptions :column="1" border>
+      <div v-if="selectedAppeal" class="dialog-section">
+        <el-descriptions :column="1" border class="dialog-descriptions">
           <el-descriptions-item label="学生">
             {{ selectedAppeal.student_name || `学生${selectedAppeal.student_id || ''}` }}
           </el-descriptions-item>
@@ -89,7 +91,7 @@
           </el-descriptions-item>
         </el-descriptions>
 
-        <el-form class="process-form" label-width="90px">
+        <el-form class="process-form dialog-form-block" label-width="90px">
           <el-form-item label="评价">
             <el-input
               v-model.trim="processForm.result_comment"
@@ -118,23 +120,27 @@
       </div>
 
       <template #footer>
-        <el-button @click="closeProcessDialog">返回</el-button>
-        <el-button
-          type="success"
-          :loading="store.processing"
-          :disabled="selectedAppeal?.status === 'processed'"
-          @click="submitDecision('approved')"
-        >
-          通过
-        </el-button>
-        <el-button
-          type="danger"
-          :loading="store.processing"
-          :disabled="selectedAppeal?.status === 'processed'"
-          @click="submitDecision('rejected')"
-        >
-          拒绝
-        </el-button>
+        <div class="dialog-footer-row">
+          <el-button class="btn-plain" @click="closeProcessDialog">返回</el-button>
+          <el-button
+            class="btn-main"
+            type="success"
+            :loading="store.processing"
+            :disabled="selectedAppeal?.status === 'processed'"
+            @click="submitDecision('approved')"
+          >
+            通过
+          </el-button>
+          <el-button
+            class="btn-danger"
+            type="danger"
+            :loading="store.processing"
+            :disabled="selectedAppeal?.status === 'processed'"
+            @click="submitDecision('rejected')"
+          >
+            拒绝
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -300,42 +306,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.appeal-process-page {
-  width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pagination-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.dialog-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .attachment-wrap {
   display: flex;
   flex-direction: column;
@@ -349,10 +319,6 @@ onMounted(() => {
 
 .attachment-wrap a:hover {
   text-decoration: underline;
-}
-
-.process-form {
-  margin-top: 8px;
 }
 
 .mail-config {

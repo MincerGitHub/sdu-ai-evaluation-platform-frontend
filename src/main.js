@@ -7,6 +7,7 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css'; // 后期再更换主题色
 
 import './assets/styles/base.css';
+import './assets/styles/table.css';
 
 const app = createApp(App);
 

@@ -1,5 +1,6 @@
 import { success, fail, now, getCurrentUser, paginate } from './utils.js'
 import { applications, reviewRecords, seq, getUserById } from './mockData.js'
+import { CLASSMAP } from '../src/utils/classMap.js'
 
 const TEACHER_ROLES = ['teacher', 'admin']
 const PENDING_STATUSES = ['pending_ai', 'pending_review', 'pending_teacher']
@@ -8,10 +9,11 @@ function hasTeacherPermission(user) {
     return !!user && TEACHER_ROLES.includes(user.role)
 }
 
-function toGrade(classId) {
+// 使用 CLASSMAP 根据 class_id 推导 grade，统一来源，避免重复逻辑
+function getGradeByClassId(classId) {
     if (!classId) return null
-    // 当前 mock 班级 301/302/303 统一归属于 2023 级
-    return 2023
+    const item = CLASSMAP.find((it) => Number(it.class_id) === Number(classId))
+    return item ? item.grade : null
 }
 
 function toProjectText(category, subType) {
@@ -32,10 +34,12 @@ function mapApplicationRecord(app) {
     const stu = getUserById(app.user_id)
     const attachments = Array.isArray(app.attachments) ? app.attachments : []
     const aiResult = app.status === 'pending_ai' ? '待检测' : '未见异常'
+    const classId = stu?.class_id || null
+    const grade = getGradeByClassId(classId)
     return {
         application_id: app.id,
-        grade: toGrade(stu?.class_id),
-        class_id: stu?.class_id || null,
+        grade,
+        class_id: classId,
         student_id: stu?.id || app.user_id,
         student_account: stu?.account || '-',
         student_name: stu?.name || '未知学生',
@@ -222,9 +226,11 @@ export default [
                     const stu = getUserById(app.user_id)
                     const classId = Number(stu?.class_id)
                     if (!classId) return
-                    const grade = toGrade(classId)
 
-                    if (query?.grade && Number(query.grade) !== grade) return
+                    const grade = getGradeByClassId(classId)
+
+                    // 只在 mock 内部做 grade/class_id 的筛选
+                    if (query?.grade && Number(query.grade) !== Number(grade)) return
                     if (query?.class_id && Number(query.class_id) !== classId) return
 
                     if (!classMap.has(classId)) {

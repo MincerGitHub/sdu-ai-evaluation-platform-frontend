@@ -33,14 +33,21 @@ function getReviewerClassIds(user) {
 function filterByRole(list, user) {
     const role = getReviewRole(user)
     if (role === 'teacher') {
-        // 教师看全局 pending_teacher
-        return list.filter((a) => a.status === 'pending_teacher' && !a.is_deleted)
+        // 教师：只看到 reviewer 已给出决策（已通过/已驳回）的申报，用于终审或修改
+        return list.filter(
+            (a) =>
+                !a.is_deleted &&
+                (a.status === 'approved' || a.status === 'rejected')
+        )
     }
     if (role === 'reviewer') {
-        // 审核员：看 pending_review，且只看令牌绑定班级内的申报
+        // 审核员：只看到待审核列表（待审核）
         const classIds = getReviewerClassIds(user)
-        return list.filter((a) => a.status === 'pending_review' && !a.is_deleted)
-            .filter((a) => classIds.includes(getStudentInfo(a.user_id).class_id))
+        return list
+            .filter((a) => !a.is_deleted && a.status === 'pending_review')
+            .filter((a) =>
+                classIds.includes(getStudentInfo(a.user_id).class_id)
+            )
     }
     return []
 }
@@ -49,7 +56,9 @@ function filterByQuery(list, query) {
     let result = list
     if (query?.class_id) {
         const cid = Number(query.class_id)
-        result = result.filter((a) => getStudentInfo(a.user_id).class_id === cid)
+        result = result.filter(
+            (a) => getStudentInfo(a.user_id).class_id === cid
+        )
     }
     return result
 }
@@ -67,7 +76,10 @@ export default [
             const role = getReviewRole(currentUser)
             if (!role) return fail(1003, '无审核权限')
 
-            let list = filterByQuery(filterByRole(applications, currentUser), query)
+            let list = filterByQuery(
+                filterByRole(applications, currentUser),
+                query
+            )
             if (query?.category) list = list.filter((a) => a.category === query.category)
             if (query?.sub_type) list = list.filter((a) => a.sub_type === query.sub_type)
             if (query?.keyword) {
@@ -79,9 +91,23 @@ export default [
             }
             const mapped = list.map((a) => {
                 const stu = getStudentInfo(a.user_id)
-                return { application_id: a.id, student_id: stu.id, student_name: stu.name, class_id: stu.class_id, title: a.title, category: a.category, sub_type: a.sub_type, status: a.status, score: a.score, created_at: a.created_at }
+                return {
+                    application_id: a.id,
+                    student_id: stu.id,
+                    student_name: stu.name,
+                    class_id: stu.class_id,
+                    title: a.title,
+                    category: a.category,
+                    sub_type: a.sub_type,
+                    status: a.status,
+                    score: a.score,
+                    created_at: a.created_at,
+                }
             })
-            return success(paginate(mapped, query?.page, query?.size), '获取成功')
+            return success(
+                paginate(mapped, query?.page, query?.size),
+                '获取成功'
+            )
         },
     },
 
@@ -95,13 +121,23 @@ export default [
             const role = getReviewRole(currentUser)
             if (!role) return fail(1003, '无审核权限')
 
-            const pending = filterByQuery(filterByRole(applications, currentUser), query)
+            const pending = filterByQuery(
+                filterByRole(applications, currentUser),
+                query
+            )
             const term = query?.term || '2025-2026-1'
             const classId = query?.class_id ? Number(query.class_id) : null
             const map = {}
 
             pending.forEach((a) => {
-                if (!map[a.category]) map[a.category] = { category: a.category, category_name: a.category, pending_count: 0, approved_count: 0, rejected_count: 0 }
+                if (!map[a.category])
+                    map[a.category] = {
+                        category: a.category,
+                        category_name: a.category,
+                        pending_count: 0,
+                        approved_count: 0,
+                        rejected_count: 0,
+                    }
                 map[a.category].pending_count++
             })
             reviewRecords.forEach((r) => {
@@ -109,12 +145,23 @@ export default [
                 if (!app) return
                 const stu = getStudentInfo(app.user_id)
                 if (classId && stu.class_id !== classId) return
-                if (!map[app.category]) map[app.category] = { category: app.category, category_name: app.category, pending_count: 0, approved_count: 0, rejected_count: 0 }
+                if (!map[app.category])
+                    map[app.category] = {
+                        category: app.category,
+                        category_name: app.category,
+                        pending_count: 0,
+                        approved_count: 0,
+                        rejected_count: 0,
+                    }
                 if (r.result === 'approved') map[app.category].approved_count++
-                else if (r.result === 'rejected') map[app.category].rejected_count++
+                else if (r.result === 'rejected')
+                    map[app.category].rejected_count++
             })
 
-            return success({ class_id: classId, term, categories: Object.values(map) }, '获取成功')
+            return success(
+                { class_id: classId, term, categories: Object.values(map) },
+                '获取成功'
+            )
         },
     },
 
@@ -128,16 +175,37 @@ export default [
             const role = getReviewRole(currentUser)
             if (!role) return fail(1003, '无审核权限')
 
-            if (!query?.category) return fail(1001, '参数校验失败', { reason: 'category 必填' })
-            let list = filterByQuery(filterByRole(applications, currentUser), query)
+            if (!query?.category)
+                return fail(1001, '参数校验失败', { reason: 'category 必填' })
+            let list = filterByQuery(
+                filterByRole(applications, currentUser),
+                query
+            )
             list = list.filter((a) => a.category === query.category)
-            if (query?.sub_type) list = list.filter((a) => a.sub_type === query.sub_type)
+            if (query?.sub_type)
+                list = list.filter((a) => a.sub_type === query.sub_type)
             const mapped = list.map((a) => {
                 const stu = getStudentInfo(a.user_id)
-                return { application_id: a.id, student_name: stu.name, status: a.status, score: a.score }
+                return {
+                    application_id: a.id,
+                    student_name: stu.name,
+                    title: a.title,
+                    status: a.status,
+                    score: a.score,
+                }
             })
             const result = paginate(mapped, query?.page, query?.size)
-            return success({ class_id: query?.class_id ? Number(query.class_id) : null, category: query.category, term: query?.term || '2025-2026-1', ...result }, '获取成功')
+            return success(
+                {
+                    class_id: query?.class_id
+                        ? Number(query.class_id)
+                        : null,
+                    category: query.category,
+                    term: query?.term || '2025-2026-1',
+                    ...result,
+                },
+                '获取成功'
+            )
         },
     },
 
@@ -151,7 +219,10 @@ export default [
             const role = getReviewRole(currentUser)
             if (!role) return fail(1003, '无审核权限')
 
-            const list = filterByQuery(filterByRole(applications, currentUser), query)
+            const list = filterByQuery(
+                filterByRole(applications, currentUser),
+                query
+            )
             return success({ pending_count: list.length }, '获取成功')
         },
     },
@@ -164,17 +235,26 @@ export default [
             const currentUser = getCurrentUser(headers)
             if (!currentUser) return fail(1004, '未登录或 token 缺失')
 
-            let list = reviewRecords.filter((r) => r.reviewer_id === currentUser.id)
+            let list = reviewRecords.filter(
+                (r) => r.reviewer_id === currentUser.id
+            )
             if (query?.class_id) list = list.filter((r) => r.class_id === Number(query.class_id))
             if (query?.result) list = list.filter((r) => r.result === query.result)
             if (query?.from) list = list.filter((r) => r.reviewed_at >= query.from)
             if (query?.to) list = list.filter((r) => r.reviewed_at <= query.to)
             const mapped = list.map((r) => ({
-                application_id: r.application_id, student_name: r.student_name, class_id: r.class_id,
-                title: r.title, result: r.result, comment: r.comment,
+                application_id: r.application_id,
+                student_name: r.student_name,
+                class_id: r.class_id,
+                title: r.title,
+                result: r.result,
+                comment: r.comment,
                 reviewed_at: r.reviewed_at,
             }))
-            return success(paginate(mapped, query?.page, query?.size), '获取成功')
+            return success(
+                paginate(mapped, query?.page, query?.size),
+                '获取成功'
+            )
         },
     },
 
@@ -197,17 +277,25 @@ export default [
 
             for (const id of uniqueIds) {
                 const app = applications.find((a) => a.id === id && !a.is_deleted)
-                if (!app) return fail(1002, `资源不存在: application_id=${id}`)
-                const allowedStatus = role === 'teacher' ? ['pending_teacher'] : ['pending_review']
-                if (!allowedStatus.includes(app.status)) return fail(1000, `application_id=${id} 当前状态 ${app.status} 不允许审核`)
+                if (!app)
+                    return fail(1002, `资源不存在: application_id=${id}`)
+                const allowedStatus =
+                    role === 'teacher'
+                        ? ['approved', 'rejected']
+                        : ['pending_review']
+                if (!allowedStatus.includes(app.status))
+                    return fail(
+                        1000,
+                        `application_id=${id} 当前状态 ${app.status} 不允许审核`
+                    )
             }
 
             const resultList = []
             for (const id of uniqueIds) {
                 const app = applications.find((a) => a.id === id)
-                const newStatus = role === 'teacher'
-                    ? (decision === 'approved' ? 'approved' : 'rejected')
-                    : (decision === 'approved' ? 'pending_teacher' : 'rejected')
+                const newStatus =
+                    decision === 'approved' ? 'approved' : 'rejected'
+
                 app.status = newStatus
                 app.comment = comment || null
                 app.updated_at = now()
@@ -215,10 +303,34 @@ export default [
                 const rid = ++seq.reviewRecord
                 const reviewedAt = now()
                 const stu = getStudentInfo(app.user_id)
-                reviewRecords.push({ review_id: rid, application_id: id, reviewer_id: currentUser.id, reviewer_role: role, student_name: stu.name, class_id: stu.class_id, title: app.title, decision, result: newStatus, comment: comment || null, reviewed_at: reviewedAt })
-                resultList.push({ application_id: id, status: newStatus, review_id: rid, reviewed_at: reviewedAt })
+                reviewRecords.push({
+                    review_id: rid,
+                    application_id: id,
+                    reviewer_id: currentUser.id,
+                    reviewer_role: role,
+                    student_name: stu.name,
+                    class_id: stu.class_id,
+                    title: app.title,
+                    decision,
+                    result: newStatus,
+                    comment: comment || null,
+                    reviewed_at: reviewedAt,
+                })
+                resultList.push({
+                    application_id: id,
+                    status: newStatus,
+                    review_id: rid,
+                    reviewed_at: reviewedAt,
+                })
             }
-            return success({ total: uniqueIds.length, success_count: uniqueIds.length, list: resultList }, '批量审核完成')
+            return success(
+                {
+                    total: uniqueIds.length,
+                    success_count: uniqueIds.length,
+                    list: resultList,
+                },
+                '批量审核完成'
+            )
         },
     },
 
@@ -257,14 +369,21 @@ export default [
             if (!app) return fail(1002, '资源不存在')
 
             const { decision, comment } = body || {}
-            if (!decision) return fail(1001, '参数校验失败', { reason: 'decision 必填' })
+            if (!decision)
+                return fail(1001, '参数校验失败', { reason: 'decision 必填' })
 
-            const allowedStatus = role === 'teacher' ? ['pending_teacher'] : ['pending_review']
-            if (!allowedStatus.includes(app.status)) return fail(1000, `当前状态 ${app.status} 不允许审核`)
+            const allowedStatus =
+                role === 'teacher'
+                    ? ['approved', 'rejected']
+                    : ['pending_review']
+            if (!allowedStatus.includes(app.status))
+                return fail(
+                    1000,
+                    `当前状态 ${app.status} 不允许审核`
+                )
 
-            const newStatus = role === 'teacher'
-                ? (decision === 'approved' ? 'approved' : 'rejected')
-                : (decision === 'approved' ? 'pending_teacher' : 'rejected')
+            const newStatus =
+                decision === 'approved' ? 'approved' : 'rejected'
 
             app.status = newStatus
             app.comment = comment || null
@@ -273,9 +392,29 @@ export default [
             const rid = ++seq.reviewRecord
             const reviewedAt = now()
             const stu = getStudentInfo(app.user_id)
-            reviewRecords.push({ review_id: rid, application_id: id, reviewer_id: currentUser.id, reviewer_role: role, student_name: stu.name, class_id: stu.class_id, title: app.title, decision, result: newStatus, comment: comment || null, reviewed_at: reviewedAt })
+            reviewRecords.push({
+                review_id: rid,
+                application_id: id,
+                reviewer_id: currentUser.id,
+                reviewer_role: role,
+                student_name: stu.name,
+                class_id: stu.class_id,
+                title: app.title,
+                decision,
+                result: newStatus,
+                comment: comment || null,
+                reviewed_at: reviewedAt,
+            })
 
-            return success({ application_id: id, status: newStatus, review_id: rid, reviewed_at: reviewedAt }, '审核完成')
+            return success(
+                {
+                    application_id: id,
+                    status: newStatus,
+                    review_id: rid,
+                    reviewed_at: reviewedAt,
+                },
+                '审核完成'
+            )
         },
     },
 ]

@@ -1,16 +1,27 @@
 <template>
-  <div class="teacher-statistics-page">
-    <div class="page-header">
+  <div class="teacher-statistics-page page-container">
+    <header class="page-header">
       <h2>申报统计</h2>
-      <div class="filters">
+    </header>
+
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <!-- 汇总信息 -->
+      </div>
+      <div class="toolbar-right">
+        <el-button class="btn-main" @click="fetchStatistics">查询</el-button>
+        <el-button class="btn-plain" @click="resetFilters">重置</el-button>
+        <el-select v-model="query.class_id" placeholder="班级" clearable style="width: 160px">
+          <el-option
+            v-for="item in classOptions"
+            :key="item.class_id"
+            :label="item.label"
+            :value="item.class_id"
+          />
+        </el-select>
         <el-select v-model="query.grade" placeholder="年级" clearable style="width: 120px">
           <el-option v-for="item in gradeOptions" :key="item" :label="item" :value="item" />
         </el-select>
-        <el-select v-model="query.class_id" placeholder="班级" clearable style="width: 120px">
-          <el-option v-for="item in classOptions" :key="item" :label="item" :value="item" />
-        </el-select>
-        <el-button type="primary" @click="fetchStatistics">查询</el-button>
-        <el-button @click="resetFilters">重置</el-button>
       </div>
     </div>
 
@@ -36,6 +47,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import statisticService from '@/services/statisticService'
+import { CLASSMAP } from '@/utils/classMap'
 
 const loading = ref(false)
 const rows = ref([])
@@ -44,15 +56,14 @@ const query = reactive({
   class_id: '',
 })
 
+// 年级选项统一从 CLASSMAP 汇总
 const gradeOptions = computed(() => {
-  const set = new Set(rows.value.map((item) => item.grade).filter(Boolean))
+  const set = new Set(CLASSMAP.map((item) => item.grade).filter(Boolean))
   return [...set].sort((a, b) => a - b)
 })
 
-const classOptions = computed(() => {
-  const set = new Set(rows.value.map((item) => item.class_id).filter(Boolean))
-  return [...set].sort((a, b) => a - b)
-})
+// 班级选项直接使用 CLASSMAP
+const classOptions = computed(() => CLASSMAP)
 
 const fetchStatistics = async () => {
   loading.value = true
@@ -82,25 +93,7 @@ onMounted(fetchStatistics)
 
 <style scoped>
 .teacher-statistics-page {
-  padding: 16px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.filters {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 </style>

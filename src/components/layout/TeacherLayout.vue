@@ -87,6 +87,9 @@
               全部申报
             </el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/teacher/appeals">
+            申诉列表
+          </el-menu-item>
           <el-menu-item index="/teacher/tokens">
             令牌管理
           </el-menu-item>

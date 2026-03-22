@@ -1,7 +1,22 @@
 export const CLASSMAP = [
-    { label: '2023级1班（301）', value: 301 },
-    { label: '2023级2班（302）', value: 302 },
-    { label: '2023级3班（303）', value: 303 },
-    { label: '2024级1班（401）', value: 401 },
-    { label: '2024级2班（402）', value: 402 },
+  // 2023级
+  {
+    grade: 2023,
+    class_id: 301,
+    value: 301,
+    label: '2023级 301班',
+  },
+  {
+    grade: 2023,
+    class_id: 302,
+    value: 302,
+    label: '2023级 302班',
+  },
+  {
+    grade: 2023,
+    class_id: 303,
+    value: 303,
+    label: '2023级 303班',
+  },
+  // 若后续有更多年级/班级，在此追加
 ]

@@ -1,62 +1,63 @@
 <template>
-  <div class="student-profile-page">
-    <el-card class="profile-card">
-      <template #header>
-        <span>个人信息</span>
-      </template>
+  <div class="page-container student-profile-page">
+    <h2 class="page-title">个人信息</h2>
 
-      <el-form :model="profileForm" label-width="90px" class="profile-form">
-        <el-form-item label="姓名">
-          <el-input v-model="profileForm.name" disabled />
-        </el-form-item>
+    <el-form :model="profileForm" label-width="90px" class="profile-form">
+      <el-form-item label="姓名">
+        <el-input v-model="profileForm.name" disabled />
+      </el-form-item>
 
-        <el-form-item label="学号">
-          <el-input v-model="profileForm.account" disabled />
-        </el-form-item>
+      <el-form-item label="学号">
+        <el-input v-model="profileForm.account" disabled />
+      </el-form-item>
 
-        <el-form-item label="邮箱">
-          <el-input v-model.trim="profileForm.email" placeholder="请输入邮箱" />
-        </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model.trim="profileForm.email" placeholder="请输入邮箱" />
+      </el-form-item>
 
-        <el-form-item label="手机号">
-          <el-input v-model.trim="profileForm.phone" placeholder="请输入手机号" />
-        </el-form-item>
+      <el-form-item label="手机号">
+        <el-input v-model.trim="profileForm.phone" placeholder="请输入手机号" />
+      </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" :loading="savingProfile" @click="handleSaveProfile">
-            提交
-          </el-button>
-          <el-button @click="handleBack">返回</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+      <el-form-item>
+        <el-button type="primary" :loading="savingProfile" @click="handleSaveProfile">
+          提交
+        </el-button>
+        <el-button @click="handleBack">返回</el-button>
+      </el-form-item>
+    </el-form>
 
-    <el-card class="token-card">
-      <template #header>
-        <span>绑定审核人令牌</span>
-      </template>
+    <h2 class="page-title" style="margin-top: 24px">绑定审核人令牌</h2>
 
-      <el-form :model="tokenForm" label-width="90px" class="token-form">
-        <el-form-item label="当前状态">
-          <el-tag :type="isReviewer ? 'success' : 'info'">
-            {{ isReviewer ? '已绑定审核权限' : '未绑定' }}
-          </el-tag>
-        </el-form-item>
+    <el-form :model="tokenForm" label-width="90px" class="token-form">
+      <el-form-item label="当前状态">
+        <el-tag :type="isReviewer ? 'success' : 'info'">
+          {{ isReviewer ? '已绑定审核权限' : '未绑定' }}
+        </el-tag>
+      </el-form-item>
 
-        <el-form-item label="令牌">
-          <el-input v-model.trim="tokenForm.token" placeholder="请输入教师发放的审核令牌" :disabled="isReviewer" />
-        </el-form-item>
+      <el-form-item label="令牌">
+        <el-input
+          v-model.trim="tokenForm.token"
+          placeholder="请输入教师发放的审核令牌"
+          :disabled="isReviewer"
+        />
+      </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" :loading="bindingToken" :disabled="isReviewer" @click="handleBindToken">
-            绑定令牌
-          </el-button>
-          <span v-if="isReviewer" class="token-hint">
-            你已具备审核人身份，可在顶部切换到审核人视图。
-          </span>
-        </el-form-item>
-      </el-form>
-    </el-card>
+      <el-form-item>
+        <el-button
+          type="primary"
+          :loading="bindingToken"
+          :disabled="isReviewer"
+          @click="handleBindToken"
+        >
+          绑定令牌
+        </el-button>
+        <span v-if="isReviewer" class="token-hint">
+          你已具备审核人身份，可在顶部切换到审核人视图。
+        </span>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
@@ -142,9 +143,6 @@ const handleBack = () => {
 
 <style scoped>
 .student-profile-page {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
   max-width: 760px;
 }
 
@@ -152,11 +150,5 @@ const handleBack = () => {
   margin-left: 12px;
   color: #606266;
   font-size: 13px;
-}
-
-@media (max-width: 768px) {
-  .student-profile-page {
-    max-width: 100%;
-  }
 }
 </style>

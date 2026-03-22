@@ -1,31 +1,29 @@
 <template>
-  <div class="teacher-profile-page">
-    <el-card class="profile-card">
-      <template #header>
-        <span>个人信息</span>
-      </template>
+  <div class="page-container teacher-profile-page">
+    <header class="page-header">
+      <h2>个人信息</h2>
+    </header>
 
-      <el-form :model="profileForm" label-width="80px" class="profile-form">
-        <el-form-item label="姓名">
-          <el-input v-model="profileForm.name" disabled />
-        </el-form-item>
+    <el-form :model="profileForm" label-width="80px" class="profile-form">
+      <el-form-item label="姓名">
+        <el-input v-model="profileForm.name" disabled />
+      </el-form-item>
 
-        <el-form-item label="工号">
-          <el-input v-model="profileForm.account" disabled />
-        </el-form-item>
+      <el-form-item label="工号">
+        <el-input v-model="profileForm.account" disabled />
+      </el-form-item>
 
-        <el-form-item label="邮箱">
-          <el-input v-model.trim="profileForm.email" placeholder="请输入邮箱" />
-        </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model.trim="profileForm.email" placeholder="请输入邮箱" />
+      </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" :loading="savingProfile" @click="handleSaveProfile">
-            提交
-          </el-button>
-          <el-button @click="handleBack">返回</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+      <el-form-item>
+        <el-button type="primary" :loading="savingProfile" @click="handleSaveProfile">
+          提交
+        </el-button>
+        <el-button @click="handleBack">返回</el-button>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
@@ -80,3 +78,9 @@ const handleBack = () => {
   router.back()
 }
 </script>
+
+<style scoped>
+.profile-form {
+  max-width: 480px;
+}
+</style>

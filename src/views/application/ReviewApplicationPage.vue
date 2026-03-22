@@ -1,15 +1,18 @@
 <template>
-    <div class="review-page">
-        <div class="page-header">
-            <h2>{{ pageTitle }}</h2>
-            <div class="header-right">
-                <el-tag type="info" size="large">待审核: {{ store.pendingCount }}</el-tag>
-            </div>
-        </div>
-        <ReviewTable @view="handleView" @approve="handleApprove" @reject="handleReject"
-            @batch-approve="handleBatchApprove" @batch-reject="handleBatchReject" />
-        <ReviewDetailDialog ref="detailDialogRef" />
-    </div>
+  <div class="review-page page-container">
+    <header class="page-header">
+      <h2>{{ pageTitle }}</h2>
+    </header>
+    <ReviewTable
+      :pending-count="pendingCount"
+      @view="handleView"
+      @approve="handleApprove"
+      @reject="handleReject"
+      @batch-approve="handleBatchApprove"
+      @batch-reject="handleBatchReject"
+    />
+    <ReviewDetailDialog ref="detailDialogRef" />
+  </div>
 </template>
 
 <script setup>
@@ -54,6 +57,9 @@ const pageTitle = computed(() => {
     const roleLabel = authStore.isTeacher || authStore.isAdmin ? '（教师复核）' : '（审核员）'
     return base + roleLabel
 })
+
+// 待审核数量（使用 store 中的统计字段或列表长度，可以按你的 store 实现调整）
+const pendingCount = computed(() => store.pendingCount ?? store.pendingList.length)
 
 // ---------- 弹窗 Ref ----------
 const detailDialogRef = ref(null)
@@ -131,7 +137,7 @@ async function handleBatchReject(rows) {
             `确认批量驳回 ${ids.length} 条申报？`,
             '批量驳回',
             {
-                confirmButtonText: '全部驳回',
+                confirmButtonText: '全部驊回',
                 cancelButtonText: '取消',
                 type: 'warning',
                 inputType: 'textarea',
@@ -163,25 +169,4 @@ watch([category, subType], initPage)
 </script>
 
 <style scoped>
-.review-page {
-    padding: 16px;
-}
-
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.page-header h2 {
-    margin: 0;
-    font-size: 18px;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
 </style>

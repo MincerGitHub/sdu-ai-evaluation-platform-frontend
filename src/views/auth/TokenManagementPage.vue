@@ -1,22 +1,28 @@
 <template>
-  <div class="token-management-page">
-    <el-card class="toolbar-card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 180px">
-            <el-option label="待激活" value="pending" />
-            <el-option label="已激活" value="active" />
-            <el-option label="已失效" value="revoked" />
-          </el-select>
-          <el-button @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </div>
-        <el-button type="primary" @click="openCreateDialog">+ 新建令牌</el-button>
-      </div>
-    </el-card>
+  <div class="page-container token-management-page">
+    <header class="page-header">
+      <h2>审核令牌管理</h2>
+    </header>
 
-    <el-card>
-      <el-table :data="tokens" v-loading="loading" border>
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <!-- 若后续有“待审核 xx 条”可放这里 -->
+      </div>
+      <div class="toolbar-right">
+        <el-button class="btn-main" @click="openCreateDialog">新建令牌</el-button>
+        <el-button class="btn-plain" @click="handleReset">重置</el-button>
+        <el-button class="btn-main" @click="handleSearch">筛选</el-button>
+        <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 180px">
+          <el-option label="待激活" value="pending" />
+          <el-option label="已激活" value="active" />
+          <el-option label="已过期" value="expired" />
+          <el-option label="已失效" value="revoked" />
+        </el-select>
+      </div>
+    </div>
+
+    <div class="table-block">
+      <el-table :data="tokens" v-loading="loading" border stripe>
         <el-table-column prop="token" label="令牌" min-width="240" />
         <el-table-column label="审核权限范围" min-width="220">
           <template #default="{ row }">
@@ -37,7 +43,12 @@
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="danger" :disabled="row.status === 'revoked'" @click="handleRevoke(row)">
+            <el-button
+              link
+              type="danger"
+              :disabled="row.status === 'revoked'"
+              @click="handleRevoke(row)"
+            >
               失效
             </el-button>
           </template>
@@ -45,22 +56,45 @@
       </el-table>
 
       <div class="pagination-wrap">
-        <el-pagination background layout="total, prev, pager, next" :total="pagination.total"
-          :current-page="pagination.page" :page-size="pagination.size" @current-change="handlePageChange" />
+        <el-pagination
+          background
+          layout="total, prev, pager, next"
+          :total="pagination.total"
+          :current-page="pagination.page"
+          :page-size="pagination.size"
+          @current-change="handlePageChange"
+        />
       </div>
-    </el-card>
+    </div>
 
     <el-dialog v-model="createDialogVisible" title="新建令牌" width="520px">
       <el-form :model="createForm" label-width="90px">
         <el-form-item label="范围">
-          <el-select v-model="createForm.class_ids" multiple filterable collapse-tags collapse-tags-tooltip
-            placeholder="请选择可审核班级" style="width: 100%">
-            <el-option v-for="item in CLASSMAP" :key="item.value" :label="item.label" :value="item.value" />
+          <el-select
+            v-model="createForm.class_ids"
+            multiple
+            filterable
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择可审核班级"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in CLASSMAP"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="失效日期">
-          <el-date-picker v-model="createForm.expired_at" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss[Z]"
-            placeholder="请选择失效日期" style="width: 100%" />
+          <el-date-picker
+            v-model="createForm.expired_at"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss[Z]"
+            placeholder="请选择失效日期"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -102,6 +136,7 @@ function statusLabel(status) {
   const map = {
     pending: '待激活',
     active: '已激活',
+    expired: '已过期',
     revoked: '已失效',
   }
   return map[status] || status
@@ -214,48 +249,4 @@ onMounted(fetchTokens)
 </script>
 
 <style scoped>
-.token-management-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.toolbar-card {
-  margin-bottom: 0;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.pagination-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 768px) {
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar-left {
-    width: 100%;
-  }
-
-  .pagination-wrap {
-    justify-content: center;
-  }
-}
 </style>

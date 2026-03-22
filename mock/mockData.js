@@ -247,7 +247,7 @@ export const applications = [
         attachments: [{ file_id: 'file_004' }],
         status: 'pending_review',
         score: 1.5,
-        comment: null,
+        comment: 666,
         // version: 1,
         is_deleted: false,
         created_at: '2026-02-16T11:00:00+00:00',
@@ -281,7 +281,7 @@ export const applications = [
         description: '市级比赛',
         occurred_at: '2026-01-12',
         attachments: [],
-        status: 'pending_teacher',           // 已过审核员，待教师复核
+        status: 'pending_review',           // 统一状态：待审核
         score: 1.5,
         comment: '材料齐全',
         // version: 1,
@@ -318,7 +318,7 @@ export const applications = [
         description: '省级赛事金奖',
         occurred_at: '2026-02-20',
         attachments: [{ file_id: 'file_006' }],
-        status: 'pending_teacher',           // 已过审核员，待教师复核
+        status: 'pending_review',           // 统一状态：待审核
         score: 5.0,
         comment: '审核通过，材料齐全',
         // version: 1,
@@ -343,6 +343,92 @@ export const applications = [
         is_deleted: false,
         created_at: '2026-02-23T14:00:00+00:00',
         updated_at: '2026-02-25T10:00:00+00:00',
+    },
+    // 下面为补充的模拟数据，覆盖五种状态
+    {
+        id: 12,
+        user_id: 1,
+        category: 'innovation',
+        sub_type: 'basic',
+        award_uid: 274,
+        title: 'AI 创新大赛初赛入围',
+        description: 'AI 创新大赛初赛阶段',
+        occurred_at: '2026-03-05',
+        attachments: [],
+        status: 'pending_ai',          // 待AI评价
+        score: 2.0,
+        comment: null,
+        is_deleted: false,
+        created_at: '2026-03-06T10:00:00+00:00',
+        updated_at: '2026-03-06T10:00:00+00:00',
+    },
+    {
+        id: 13,
+        user_id: 2,
+        category: 'labor',
+        sub_type: 'basic',
+        award_uid: 61,
+        title: '校园卫生志愿服务',
+        description: '累计志愿服务 20 小时',
+        occurred_at: '2026-02-28',
+        attachments: [],
+        status: 'pending_review',      // 待审核
+        score: 1.0,
+        comment: null,
+        is_deleted: false,
+        created_at: '2026-03-01T09:00:00+00:00',
+        updated_at: '2026-03-01T09:00:00+00:00',
+    },
+    {
+        id: 14,
+        user_id: 2,
+        category: 'art',
+        sub_type: 'achievement',
+        award_uid: 32,
+        title: '市级书画比赛金奖',
+        description: '市级书画比赛一等奖',
+        occurred_at: '2026-02-10',
+        attachments: [],
+        status: 'approved',            // 已通过
+        score: 4.0,
+        comment: '作品质量较高',
+        is_deleted: false,
+        created_at: '2026-02-18T10:00:00+00:00',
+        updated_at: '2026-02-20T10:00:00+00:00',
+    },
+    {
+        id: 15,
+        user_id: 3,
+        category: 'physical_mental',
+        sub_type: 'basic',
+        award_uid: 4,
+        title: '校篮球联赛报名',
+        description: '资料不完整',
+        occurred_at: '2026-03-02',
+        attachments: [],
+        status: 'rejected',            // 已驳回
+        score: 0,
+        comment: '缺少官方成绩证明',
+        is_deleted: false,
+        created_at: '2026-03-03T11:00:00+00:00',
+        updated_at: '2026-03-05T11:00:00+00:00',
+    },
+    {
+        id: 16,
+        user_id: 1,
+        category: 'physical_mental',
+        sub_type: 'achievement',
+        award_uid: 5,
+        title: '校运动会接力赛冠军',
+        description: '往届数据已归档',
+        occurred_at: '2025-10-15',
+        attachments: [],
+        status: 'archived',            // 已归档
+        score: 3.0,
+        comment: '往届成绩',
+        is_deleted: false,
+        created_at: '2025-10-20T09:00:00+00:00',
+        updated_at: '2025-12-01T09:00:00+00:00',
     },
 ]
 
@@ -562,6 +648,8 @@ export const appeals = [
 // ------------------------------------------------------------
 // 表7：导出任务表
 // 由教师发起导出操作后生成
+//   - 新逻辑下：POST /api/v1/archives/exports 会先创建 export_task，
+//     并在 store_to_archive=true 时同步写入 archives 表
 // ------------------------------------------------------------
 export const exportTasks = [
     {
@@ -591,6 +679,7 @@ export const exportTasks = [
 // ------------------------------------------------------------
 // 表8：归档表
 // 由教师/管理员基于导出任务创建归档记录
+//   - 新逻辑下：通常由 POST /api/v1/archives/exports 在 store_to_archive=true 时自动插入
 // export_task_id 对应 表7：导出任务表
 // class_ids 对应班级
 // ------------------------------------------------------------
@@ -669,7 +758,7 @@ export const emailLogs = [
 // 序列号（各 mock 文件通过引用修改，保持运行时状态）
 // ------------------------------------------------------------
 export const seq = {
-    application: 11,   // 下一个 application id = ++seq.application
+    application: 16,   // 下一个 application id = ++seq.application
     reviewRecord: 6,   // 下一个 review_record id = ++seq.reviewRecord
     token: 4,          // 下一个 token id = ++seq.token
     appeal: 3,         // 下一个 appeal id = ++seq.appeal

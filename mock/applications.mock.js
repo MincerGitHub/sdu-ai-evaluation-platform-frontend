@@ -24,7 +24,7 @@ export default [
                 description: description || '',
                 occurred_at: occurred_at || null,
                 attachments: attachments || [],
-                status: 'pending_review',
+                status: 'pending_review', // 取消ai审核，直接进入pending_review
                 score,
                 comment: null,
                 is_deleted: false,
@@ -113,7 +113,7 @@ export default [
             const id = Number(query.application_id)
             const app = applications.find((a) => a.id === id && !a.is_deleted)
             if (!app) return fail(1002, '资源不存在')
-            if (!['pending_ai', 'pending_review'].includes(app.status)) return fail(1000, `当前状态 ${app.status} 不允许编辑`)
+            if (!['pending_ai', 'pending_review'].includes(app.status)) return fail(1000, `当前${app.status} 不允许编辑`)
             const { award_uid, title, description, occurred_at, attachments, category, sub_type, score } = body || {}
             if (award_uid !== undefined) app.award_uid = award_uid
             if (title !== undefined) app.title = title
@@ -123,7 +123,7 @@ export default [
             if (category !== undefined) app.category = category
             if (sub_type !== undefined) app.sub_type = sub_type
             if (score !== undefined) app.score = score
-            app.status = 'pending_review'
+            app.status = 'pending_review' // 取消ai审核，直接进入pending_review
             app.updated_at = now()
             return success({ id: app.id, status: app.status, updated_at: app.updated_at }, '更新成功')
         },
