@@ -9,6 +9,10 @@ import 'element-plus/dist/index.css'; // 后期再更换主题色
 import './assets/styles/base.css';
 import './assets/styles/table.css';
 
+import { useAuthStore  } from './stores/auth';
+const authStore = useAuthStore()
+authStore.initAuth()
+
 const app = createApp(App);
 
 const pinia = createPinia();

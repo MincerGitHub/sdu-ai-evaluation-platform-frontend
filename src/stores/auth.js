@@ -63,6 +63,43 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('view_mode', mode)
     }
 
+    let refreshTimer = null
+    
+    const clearRefreshTimer = () => {
+        if (refreshTimer) {
+            clearTimeout(refreshTimer)
+            refreshTimer = null
+        }
+    }
+
+    const setupAutoRefresh = () => {
+        clearRefreshTimer()
+        if(!accessToken.value) return
+
+        try {
+            const base64URL = accessToken.value.split('.')[1]
+            const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/')
+            const payload = JSON.parse(window.atob(base64))
+            const expiryTime = payload.exp * 1000
+            const currentTime = Date.now()
+            const timeout = expiryTime - currentTime - (5 * 60 * 1000)
+            if(timeout < 60000) timeout = 0
+            console.log(`Token将在 ${timeout / 1000} 秒后自动续期`)
+
+            refreshTimer = setTimeout(async () => {
+                try {
+                    await refreshAccessToken()
+                    setupAutoRefresh()
+                    console.log('Token 主动续期成功')
+                } catch (err) {
+                    console.warn('主动续期失败，等待被动拦截', err)
+                }
+            }, timeout)
+        } catch (e) {
+            console.error('Token格式非法，无法开启自动续期')
+        }
+    }
+
     async function login({ account, password }) {
         // 登录前先清除旧 token，避免请求携带过期凭证
         localStorage.removeItem('access_token')
@@ -90,11 +127,12 @@ export const useAuthStore = defineStore('auth', () => {
         } else {
             setViewMode('student')
         }
-
+        setupAutoRefresh()
         return data
     }
 
     async function logout() {
+        clearRefreshTimer()
         try {
             if (refreshToken.value) {
                 await authService.logout(refreshToken.value)
@@ -145,7 +183,12 @@ export const useAuthStore = defineStore('auth', () => {
         setUser(latestUser)
         return data
     }
-
+    const initAuth = async () => {
+        if(accessToken.value) {
+            setupAutoRefresh()
+        }
+    }
+    
     return {
         user,
         accessToken,
@@ -166,5 +209,6 @@ export const useAuthStore = defineStore('auth', () => {
         updateProfile,
         bindReviewerToken,
         setViewMode,
+        initAuth
     }
 })
