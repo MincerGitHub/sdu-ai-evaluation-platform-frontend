@@ -18,23 +18,35 @@
         </el-form-item>
 
         <div v-if="error" class="error">{{ error }}</div>
+        <div class="register-link">
+          <el-button link type="primary" @click="router.push({ name: 'Register' })">
+            没有账号？去注册
+          </el-button>
+        </div>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES } from '@/utils/constants'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const account = ref('')
 const password = ref('')
 const error = ref('')
+
+onMounted(() => {
+  if (typeof route.query.account === 'string') {
+    account.value = route.query.account
+  }
+})
 
 const onSubmit = async () => {
   error.value = ''
@@ -86,5 +98,10 @@ const onSubmit = async () => {
 .error {
   color: red;
   margin-top: 10px;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 8px;
 }
 </style>

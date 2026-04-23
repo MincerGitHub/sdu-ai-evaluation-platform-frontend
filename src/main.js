@@ -4,14 +4,10 @@ import router from './router';
 import { createPinia } from 'pinia';
 
 import ElementPlus from 'element-plus';
-import 'element-plus/dist/index.css'; // 后期再更换主题色
+import 'element-plus/dist/index.css';
 
 import './assets/styles/base.css';
 import './assets/styles/table.css';
-
-import { useAuthStore  } from './stores/auth';
-const authStore = useAuthStore()
-authStore.initAuth()
 
 const app = createApp(App);
 
@@ -20,5 +16,9 @@ app.use(pinia);
 app.use(router);
 
 app.use(ElementPlus);
+
+import { useAuthStore  } from '@/stores/auth';
+const authStore = useAuthStore()
+authStore.initAuth()
 
 app.mount('#app');

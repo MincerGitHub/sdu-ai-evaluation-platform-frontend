@@ -11,7 +11,7 @@
       @batch-approve="handleBatchApprove"
       @batch-reject="handleBatchReject"
     />
-    <ReviewDetailDialog ref="detailDialogRef" />
+    <ReviewDetailDialog ref="detailDialogRef" @submitted="store.fetchPendingCount()" />
   </div>
 </template>
 
@@ -137,7 +137,7 @@ async function handleBatchReject(rows) {
             `确认批量驳回 ${ids.length} 条申报？`,
             '批量驳回',
             {
-                confirmButtonText: '全部驊回',
+                confirmButtonText: '全部驳回',
                 cancelButtonText: '取消',
                 type: 'warning',
                 inputType: 'textarea',

@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const setupAutoRefresh = () => {
         clearRefreshTimer()
-        if(!accessToken.value) return
+        if (!accessToken.value) return
 
         try {
             const base64URL = accessToken.value.split('.')[1]
@@ -82,8 +82,8 @@ export const useAuthStore = defineStore('auth', () => {
             const payload = JSON.parse(window.atob(base64))
             const expiryTime = payload.exp * 1000
             const currentTime = Date.now()
-            const timeout = expiryTime - currentTime - (5 * 60 * 1000)
-            if(timeout < 60000) timeout = 0
+            let timeout = expiryTime - currentTime - (5 * 60 * 1000)
+            if (timeout < 60000) timeout = 0
             console.log(`Token将在 ${timeout / 1000} 秒后自动续期`)
 
             refreshTimer = setTimeout(async () => {
@@ -131,6 +131,11 @@ export const useAuthStore = defineStore('auth', () => {
         return data
     }
 
+    async function register(payload) {
+        const res = await authService.register(payload)
+        return res.data
+    }
+
     async function logout() {
         clearRefreshTimer()
         try {
@@ -163,7 +168,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function updateProfile(profilePayload) {
-        const res = await authService.updateUserInfo(profilePayload)
+        const normalizeOptionalText = (value) => {
+            if (value === null || value === undefined) return null
+            const text = String(value).trim()
+            return text || null
+        }
+
+        const nextEmail = normalizeOptionalText(profilePayload?.email)
+        const nextPhone = normalizeOptionalText(profilePayload?.phone)
+        const currentEmail = normalizeOptionalText(user.value?.email)
+        const currentPhone = normalizeOptionalText(user.value?.phone)
+
+        const payload = {}
+        if (nextEmail !== currentEmail) payload.email = nextEmail
+        if (nextPhone !== currentPhone) payload.phone = nextPhone
+
+        if (!Object.keys(payload).length) {
+            return user.value || {}
+        }
+
+        const res = await authService.updateUserInfo(payload)
         const latestUser = {
             ...(user.value || {}),
             ...(res.data || {}),
@@ -174,17 +198,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function bindReviewerToken(token) {
         const res = await tokenService.activateReviewerToken(token)
-        const data = res.data || {}
-        const latestUser = {
-            ...(user.value || {}),
-            is_reviewer: true,
-            reviewer_token_id: data.reviewer_token_id || data.token_id || user.value?.reviewer_token_id || null,
-        }
-        setUser(latestUser)
-        return data
+        await fetchCurrentUser()
+        return res.data || {}
     }
     const initAuth = async () => {
-        if(accessToken.value) {
+        if (accessToken.value) {
             setupAutoRefresh()
         }
     }
@@ -202,6 +220,7 @@ export const useAuthStore = defineStore('auth', () => {
         isInReviewerView,
         canUseReviewerView,
         viewMode,
+        register,
         login,
         logout,
         refreshAccessToken,

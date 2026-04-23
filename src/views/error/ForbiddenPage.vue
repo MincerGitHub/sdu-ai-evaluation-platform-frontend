@@ -6,10 +6,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ForbiddenPage'
-}
+<script setup>
+defineOptions({
+  name: 'ForbiddenPage',
+})
 </script>
 
 <style scoped>

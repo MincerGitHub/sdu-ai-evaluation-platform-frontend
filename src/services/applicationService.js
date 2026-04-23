@@ -1,6 +1,11 @@
 import http from './http'
 
 const applicationService = {
+    /** 获取分类树 */
+    getCategories() {
+        return http.get('/applications/categories')
+    },
+
     /** 创建申报 */
     create(payload) {
         return http.post('/applications', payload)

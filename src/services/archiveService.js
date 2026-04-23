@@ -21,6 +21,21 @@ const archiveService = {
         return `/api/v1/archives/exports/${archiveId}/download`
     },
 
+    /** 鉴权下载归档文件 */
+    async downloadArchiveFile(archiveId, filename) {
+        const blob = await http.get(`/archives/exports/${archiveId}/download`, {
+            responseType: 'blob',
+        })
+        const blobUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename || `${archiveId}.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+    },
+
     /** 发布公示 */
     createAnnouncement(payload) {
         return http.post('/announcements', payload)

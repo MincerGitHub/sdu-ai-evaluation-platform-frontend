@@ -27,8 +27,9 @@
             :value="item.class_id"
           />
         </el-select>
-        <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 140px">
+        <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 160px">
           <el-option label="待AI评价" value="pending_ai" />
+          <el-option label="AI异常" value="ai_abnormal" />
           <el-option label="待审核" value="pending_review" />
           <el-option label="已通过" value="approved" />
           <el-option label="已驳回" value="rejected" />
@@ -95,14 +96,17 @@
       </div>
     </div>
 
-    <ReviewDetailDialog ref="reviewDetailDialogRef" />
+    <ReviewDetailDialog
+      ref="reviewDetailDialogRef"
+      :on-fetch-detail="fetchDetailForTeacher"
+      :on-submit-decision="submitTeacherDecision"
+    />
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import fileService from '@/services/fileService'
 import applicationService from '@/services/applicationService'
 import statisticService from '@/services/statisticService'
 import { APPLICATION_STATUS_META } from '@/utils/constants'
@@ -110,7 +114,6 @@ import ReviewDetailDialog from '@/components/review/ReviewDetailDialog.vue'
 import { CLASSMAP } from '@/utils/classMap'
 
 const loading = ref(false)
-const rechecking = ref(false)
 const rows = ref([])
 const selectedRows = ref([])
 const classOptions = ref(CLASSMAP)
@@ -137,18 +140,6 @@ const statusText = (status) => {
 const statusTagType = (status) => {
   const meta = APPLICATION_STATUS_META[status]
   return meta?.tagType || 'info'
-}
-
-const getAttachmentUrl = (item) => {
-  if (!item) return '#'
-  if (item.url) return item.url
-  if (item.file_id) return fileService.getFileUrl(item.file_id)
-  return '#'
-}
-
-const getAttachmentName = (item, index) => {
-  if (!item) return `附件${index + 1}`
-  return item.name || item.filename || item.file_id || `附件${index + 1}`
 }
 
 const fetchList = async (page = pagination.page) => {
@@ -189,7 +180,34 @@ const onSelectionChange = (selection) => {
 
 const openReviewDetail = (row) => {
   if (!row?.application_id) return
-  reviewDetailDialogRef.value?.open(row.application_id)
+  reviewDetailDialogRef.value?.open(row.application_id, row)
+}
+
+const fetchDetailForTeacher = async (applicationId, row) => {
+  const res = await applicationService.getDetail(applicationId)
+  const detail = res?.data || {}
+  return {
+    success: true,
+    data: {
+      ...detail,
+      student: detail.student || {
+        id: row?.student_id || null,
+        name: row?.student_name || '',
+        account: row?.student_account || '',
+        class_id: row?.class_id || null,
+        email: row?.student_email || '',
+      },
+    },
+  }
+}
+
+const submitTeacherDecision = async (applicationId, payload, detail) => {
+  const res = await statisticService.recheckApplication(applicationId, {
+    ...payload,
+    score: detail?.score ?? undefined,
+  })
+  await fetchList()
+  return { success: true, data: res?.data || {} }
 }
 
 const archiveIds = async (ids) => {

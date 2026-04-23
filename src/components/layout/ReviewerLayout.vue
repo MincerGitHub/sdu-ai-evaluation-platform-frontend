@@ -12,7 +12,7 @@
           <el-menu-item index="/student/appeals">
             我的申诉
           </el-menu-item>
-          <el-menu-item index="/student/announcements">
+          <el-menu-item index="/student/announcement">
             公示
           </el-menu-item>
           <el-sub-menu index="user-menu">
@@ -89,14 +89,16 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const user = computed(() => authStore.user)
+const activeMenu = computed(() => route.path)
 
 const canUseReviewerView = computed(() => authStore.canUseReviewerView)
 const isInReviewerView = computed(() => authStore.isInReviewerView)

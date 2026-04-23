@@ -4,13 +4,7 @@
       <h2>导出</h2>
     </header>
 
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="80px"
-      class="export-form"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" class="export-form">
       <el-form-item label="年级" prop="grade">
         <el-select
           v-model="form.grade"
@@ -18,12 +12,7 @@
           placeholder="请选择年级"
           style="width: min(320px, 100%)"
         >
-          <el-option
-            v-for="item in gradeOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
+          <el-option v-for="item in gradeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
 
@@ -50,21 +39,25 @@
         <el-switch v-model="form.storeToArchive" />
       </el-form-item>
     </el-form>
+
     <el-form-item>
-      <el-button class="btn-main" :loading="submitting" @click="handleSubmit">
-        提交
-      </el-button>
+      <el-button class="btn-main" :loading="submitting" @click="handleSubmit">提交</el-button>
       <el-button class="btn-plain" @click="handleBack">返回</el-button>
-      <div v-if="taskId" class="task-id">任务 ID：{{ taskId }}</div>
+      <div v-if="taskId" class="task-id">
+        <div>任务 ID：{{ taskId }}</div>
+        <div v-if="taskStatus">状态：{{ taskStatus }}</div>
+        <div v-if="taskError" class="task-error">失败原因：{{ taskError }}</div>
+        <el-button v-if="downloadUrl" link type="primary" @click="openDownload">下载导出文件</el-button>
+      </div>
     </el-form-item>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import archiveService from '@/services/archiveService'
+import teacherService from '@/services/teacherService'
 import { CLASSMAP } from '@/utils/classMap'
 
 const router = useRouter()
@@ -72,8 +65,11 @@ const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
 const taskId = ref('')
+const taskStatus = ref('')
+const taskError = ref('')
+const downloadUrl = ref('')
+const downloadFileName = ref('')
 
-// 根据 CLASSMAP 生成年级/班级选项
 const gradeOptions = computed(() => {
   const set = new Map()
   CLASSMAP.forEach((item) => {
@@ -92,7 +88,6 @@ const classOptions = computed(() => {
   return CLASSMAP.filter((item) => Number(item.grade) === Number(form.grade))
 })
 
-// 表单：grade 为数字；classId 为单个 class_id（数字或 null）
 const form = reactive({
   grade: null,
   classId: null,
@@ -109,6 +104,10 @@ const handleBack = () => {
 
 const handleSubmit = async () => {
   taskId.value = ''
+  taskStatus.value = ''
+  taskError.value = ''
+  downloadUrl.value = ''
+  downloadFileName.value = ''
   if (!formRef.value) return
 
   try {
@@ -128,7 +127,7 @@ const handleSubmit = async () => {
     }
 
     const payload = {
-      scope: 'applications',
+      scope: 'teacher_statistics',
       format: 'xlsx',
       filters: {
         grade,
@@ -137,7 +136,7 @@ const handleSubmit = async () => {
       store_to_archive: form.storeToArchive,
     }
 
-    const res = await archiveService.createExport(payload)
+    const res = await teacherService.createExport(payload)
     const createdTaskId = res?.data?.task_id
     if (!createdTaskId) {
       ElMessage.error('导出任务创建失败')
@@ -145,12 +144,53 @@ const handleSubmit = async () => {
     }
 
     taskId.value = createdTaskId
+    taskStatus.value = 'queued'
     ElMessage.success('导出任务已创建')
-  } catch (e) {
-    ElMessage.error(e?.message || '请求失败')
+    await pollTask(createdTaskId)
+  } catch (error) {
+    ElMessage.error(error?.message || '请求失败')
   } finally {
     submitting.value = false
   }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const pollTask = async (id) => {
+  for (let i = 0; i < 30; i += 1) {
+    try {
+      const res = await teacherService.getExportTask(id)
+      const data = res?.data || {}
+      taskStatus.value = data.status || taskStatus.value || 'queued'
+      taskError.value = data.error_message || ''
+
+      if (data.status === 'completed') {
+        downloadUrl.value = data.file_url || teacherService.getExportDownloadUrl(id)
+        downloadFileName.value = data.file_name || `${id}.xlsx`
+        ElMessage.success('导出任务已完成')
+        return
+      }
+
+      if (data.status === 'failed') {
+        ElMessage.error(data.error_message || '导出任务失败')
+        return
+      }
+    } catch (error) {
+      taskError.value = error?.message || '查询导出任务状态失败'
+      ElMessage.error(taskError.value)
+      return
+    }
+    await sleep(1000)
+  }
+
+  ElMessage.warning('导出任务仍在处理中，请稍后再查看')
+}
+
+const openDownload = () => {
+  if (!taskId.value) return
+  teacherService.downloadExportFile(taskId.value, downloadFileName.value).catch((error) => {
+    ElMessage.error(error?.message || '下载导出文件失败')
+  })
 }
 </script>
 
@@ -162,7 +202,12 @@ const handleSubmit = async () => {
 }
 
 .task-id {
+  margin-top: 8px;
   color: #606266;
   font-size: 14px;
+}
+
+.task-error {
+  color: #f56c6c;
 }
 </style>

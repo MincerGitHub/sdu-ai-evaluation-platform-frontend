@@ -13,6 +13,12 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginPage.vue'),
       meta: { public: true },
     },
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('@/views/auth/RegisterPage.vue'),
+      meta: { public: true },
+    },
 
     // 学生端
     {
@@ -89,6 +95,11 @@ const router = createRouter({
           path: 'statistics',
           name: 'TeacherStatistics',
           component: () => import('@/views/application/TeacherStatisticsPage.vue'),
+        },
+        {
+          path: 'statistics/students',
+          name: 'TeacherStudentStatistics',
+          component: () => import('@/views/application/TeacherStudentStatisticsPage.vue'),
         },
         {
           path: 'all-applications',

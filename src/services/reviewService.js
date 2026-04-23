@@ -3,7 +3,7 @@ import http from './http'
 const reviewService = {
     /**
      * 获取待审核列表
-     * @param {Object} params - { class_id, category, sub_type, keyword, page, size, role }
+     * @param {Object} params - { class_id, category, sub_type, keyword, page, size }
      */
     getPendingList(params = {}) {
         return http.get('/reviews/pending', { params })
@@ -11,7 +11,7 @@ const reviewService = {
 
     /**
      * 获取待审核分类汇总
-     * @param {Object} params - { class_id, term, role }
+     * @param {Object} params - { class_id, term }
      */
     getCategorySummary(params = {}) {
         return http.get('/reviews/pending/category-summary', { params })
@@ -19,7 +19,7 @@ const reviewService = {
 
     /**
      * 按分类获取待审核明细
-     * @param {Object} params - { class_id, category(必填), sub_type, term, page, size, role }
+     * @param {Object} params - { class_id, category(必填), sub_type, term, page, size }
      */
     getPendingByCategory(params = {}) {
         return http.get('/reviews/pending/by-category', { params })
@@ -60,7 +60,7 @@ const reviewService = {
 
     /**
      * 获取待审核数量
-     * @param {Object} params - { class_id, role }
+     * @param {Object} params - { class_id }
      */
     getPendingCount(params = {}) {
         return http.get('/reviews/pending-count', { params })

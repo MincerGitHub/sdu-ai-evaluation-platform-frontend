@@ -1,5 +1,11 @@
 import http from './http'
 
+const normalizeOptionalText = (value) => {
+    if (value === null || value === undefined) return null
+    const text = String(value).trim()
+    return text || null
+}
+
 const authService = {
     register(payload) {
         return http.post('/auth/register', payload)
@@ -22,7 +28,14 @@ const authService = {
     },
 
     updateUserInfo(userInfo) {
-        return http.put('/users/me', userInfo)
+        const payload = { ...userInfo }
+        if (Object.prototype.hasOwnProperty.call(payload, 'email')) {
+            payload.email = normalizeOptionalText(payload.email)
+        }
+        if (Object.prototype.hasOwnProperty.call(payload, 'phone')) {
+            payload.phone = normalizeOptionalText(payload.phone)
+        }
+        return http.put('/users/me', payload)
     },
 }
 

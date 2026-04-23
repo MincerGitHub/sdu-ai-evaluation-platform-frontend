@@ -65,10 +65,11 @@
             :http-request="handleUpload"
             :show-file-list="false"
             :before-upload="beforeUpload"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.docx"
           >
             <el-button>+ 上传文件</el-button>
           </el-upload>
-          <div class="upload-tip">支持图片/PDF，单个文件不超过 10MB（mock 环境仅模拟上传）</div>
+          <div class="upload-tip">支持图片/PDF，单个文件不超过 10MB</div>
 
           <div v-if="attachments.length" class="attachment-list">
             <div v-for="item in attachments" :key="item.file_id" class="attachment-item">
@@ -124,11 +125,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import appealService from '@/services/appealService'
-import archiveService from '@/services/archiveService'
+import announcementService from '@/services/announcementService'
 import fileService from '@/services/fileService'
 import { useAuthStore } from '@/stores/auth'
 
@@ -147,6 +148,7 @@ const currentAppeal = ref(null)
 
 const announcementOptions = ref([])
 const attachments = ref([])
+let announcementRefreshTimer = null
 const form = reactive({
   announcementId: null,
   content: '',
@@ -217,18 +219,39 @@ const resetCreateForm = () => {
 
 const loadAnnouncements = async () => {
   try {
-    const res = await archiveService.getAnnouncements()
-    const list = Array.isArray(res.data) ? res.data : []
-    announcementOptions.value = list.map((item) => ({
-      id: item.id,
-      title: item.title,
-    }))
+    const res = await announcementService.getAnnouncements()
+    const raw = res?.data
+    const list = Array.isArray(raw) ? raw : Array.isArray(raw?.list) ? raw.list : []
+    announcementOptions.value = list
+      .filter((item) => item)
+      .map((item) => ({
+        id: Number(item.id ?? item.announcement_id),
+        title: item.title || `公示 #${item.id ?? item.announcement_id ?? '-'}`,
+      }))
+      .filter((item) => Number.isInteger(item.id) && item.id > 0)
     if (!form.announcementId && announcementOptions.value.length) {
       form.announcementId = announcementOptions.value[0].id
     }
   } catch (error) {
     ElMessage.error(error?.message || '获取公示列表失败')
   }
+}
+
+const startAnnouncementAutoRefresh = () => {
+  stopAnnouncementAutoRefresh()
+  announcementRefreshTimer = window.setInterval(() => {
+    loadAnnouncements()
+  }, 5000)
+}
+
+const stopAnnouncementAutoRefresh = () => {
+  if (!announcementRefreshTimer) return
+  window.clearInterval(announcementRefreshTimer)
+  announcementRefreshTimer = null
+}
+
+const handleWindowFocus = () => {
+  loadAnnouncements()
 }
 
 const loadAppeals = async () => {
@@ -284,6 +307,12 @@ const cancelCreate = async () => {
 }
 
 const beforeUpload = (file) => {
+  const ext = String(file?.name || '').split('.').pop()?.toLowerCase() || ''
+  const allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'docx']
+  if (!allowedExt.includes(ext)) {
+    ElMessage.warning('浠呮敮鎸?pdf/jpg/jpeg/png/webp/docx')
+    return false
+  }
   const isWithinSize = file.size / 1024 / 1024 < 10
   if (!isWithinSize) {
     ElMessage.warning('文件大小不能超过 10MB')
@@ -298,11 +327,12 @@ const handleUpload = async ({ file }) => {
     const data = res.data || {}
     const fileId = data.file_id
     if (!fileId) throw new Error('上传返回缺少 file_id')
+    const accessUrl = await fileService.getFileAccessUrl(fileId)
 
     attachments.value.push({
       file_id: fileId,
       name: file.name,
-      url: fileService.getFileUrl(fileId),
+      url: accessUrl || fileService.getFileUrl(fileId),
     })
     ElMessage.success('文件上传成功')
   } catch (error) {
@@ -353,6 +383,17 @@ const handleDelete = () => {
 onMounted(async () => {
   syncModeFromRoute()
   await Promise.all([loadAppeals(), loadAnnouncements()])
+  startAnnouncementAutoRefresh()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('focus', handleWindowFocus)
+  }
+})
+
+onBeforeUnmount(() => {
+  stopAnnouncementAutoRefresh()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('focus', handleWindowFocus)
+  }
 })
 </script>
 

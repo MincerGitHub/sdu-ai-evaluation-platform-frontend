@@ -91,7 +91,7 @@
           <el-date-picker
             v-model="createForm.expired_at"
             type="datetime"
-            value-format="YYYY-MM-DDTHH:mm:ss[Z]"
+            value-format="YYYY-MM-DDTHH:mm:ssZ"
             placeholder="请选择失效日期"
             style="width: 100%"
           />

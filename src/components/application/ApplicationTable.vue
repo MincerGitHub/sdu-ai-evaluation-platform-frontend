@@ -40,7 +40,7 @@
           >
             修改
           </el-button>
-          <el-button size="small" type="danger" plain @click="handleDelete(row)">
+          <el-button size="small" type="danger" plain :disabled="!isEditable(row)" @click="handleDelete(row)">
             删除
           </el-button>
         </template>
@@ -65,6 +65,7 @@ const emit = defineEmits(['edit'])
 // 状态可编辑：仅待AI评价/待审核
 const editableStatuses = [
   APPLICATION_STATUSES.PENDING_AI,
+  APPLICATION_STATUSES.AI_ABNORMAL,
   APPLICATION_STATUSES.PENDING_REVIEW,
 ]
 function isEditable(row) {

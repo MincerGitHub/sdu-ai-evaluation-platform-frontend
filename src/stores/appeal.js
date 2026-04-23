@@ -62,7 +62,7 @@ export const useAppealStore = defineStore('appeal', () => {
 
             if (options.sendEmail && options.to) {
                 await notificationService.sendAppealResultEmail({
-                    application_id: appealId,
+                    appeal_id: appealId,
                     to: options.to,
                 })
             }

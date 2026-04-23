@@ -30,6 +30,31 @@ const teacherService = {
         })
     },
 
+    /** 查询导出任务状态 */
+    getExportTask(taskId) {
+        return http.get(`/teacher/exports/${taskId}`)
+    },
+
+    /** 导出文件下载 URL */
+    getExportDownloadUrl(taskId) {
+        return `/api/v1/teacher/exports/${taskId}/download`
+    },
+
+    /** 鉴权下载导出文件 */
+    async downloadExportFile(taskId, filename) {
+        const blob = await http.get(`/teacher/exports/${taskId}/download`, {
+            responseType: 'blob',
+        })
+        const blobUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename || `${taskId}.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+    },
+
     /** 统计看板 */
     getStatistics(params = {}) {
         return http.get('/teacher/statistics', { params })

@@ -3,55 +3,55 @@ import { ref } from 'vue';
 import systemService from '../services/systemService';
 
 export const useSystemStore = defineStore('system', () => {
-    const awardTypes = ref([]);
-    const awardLevels = ref([]);
-    const systemConfig = ref({});
-    const logs = ref([]);
+    const health = ref(null)
+    const systemConfig = ref({})
+    const logs = ref([])
+    const awardDicts = ref([])
 
-    const fetchAwardTypes = async () => {
+    const fetchHealth = async () => {
         try {
-            const response = await systemService.getAwardTypes();
-            awardTypes.value = response.data;
+            const response = await systemService.getApiHealth()
+            health.value = response.data || null
         } catch (error) {
-            console.error('Failed to fetch award types:', error);
+            console.error('Failed to fetch health:', error)
         }
-    };
-
-    const fetchAwardLevels = async () => {
-        try {
-            const response = await systemService.getAwardLevels();
-            awardLevels.value = response.data;
-        } catch (error) {
-            console.error('Failed to fetch award levels:', error);
-        }
-    };
+    }
 
     const fetchSystemConfig = async () => {
         try {
-            const response = await systemService.getSystemConfig();
-            systemConfig.value = response.data;
+            const response = await systemService.getConfigs()
+            systemConfig.value = response.data || {}
         } catch (error) {
-            console.error('Failed to fetch system config:', error);
+            console.error('Failed to fetch system config:', error)
         }
-    };
+    }
 
-    const fetchLogs = async () => {
+    const fetchLogs = async (params = {}) => {
         try {
-            const response = await systemService.getSystemLogs();
-            logs.value = response.data;
+            const response = await systemService.getLogs(params)
+            logs.value = response.data?.list || []
         } catch (error) {
-            console.error('Failed to fetch logs:', error);
+            console.error('Failed to fetch logs:', error)
         }
-    };
+    }
+
+    const fetchAwardDicts = async () => {
+        try {
+            const response = await systemService.getAwardDicts()
+            awardDicts.value = Array.isArray(response.data) ? response.data : []
+        } catch (error) {
+            console.error('Failed to fetch award dicts:', error)
+        }
+    }
 
     return {
-        awardTypes,
-        awardLevels,
+        health,
         systemConfig,
         logs,
-        fetchAwardTypes,
-        fetchAwardLevels,
+        awardDicts,
+        fetchHealth,
         fetchSystemConfig,
         fetchLogs,
-    };
-});
+        fetchAwardDicts,
+    }
+})

@@ -76,6 +76,12 @@ import { useReviewStore } from '@/stores/review'
 import { APPLICATION_STATUS_META } from '@/utils/constants'
 
 const store = useReviewStore()
+defineProps({
+  pendingCount: {
+    type: Number,
+    default: 0,
+  },
+})
 const emit = defineEmits(['view', 'approve', 'reject', 'batch-approve', 'batch-reject'])
 
 const selectedRows = ref([])

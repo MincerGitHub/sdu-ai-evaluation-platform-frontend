@@ -1,9 +1,8 @@
 <template>
   <div class="page-container teacher-archive-page">
-    <!-- 归档列表 -->
     <div class="table-toolbar">
-        <div class="toolbar-left">
-          <h2>归档列表</h2>
+      <div class="toolbar-left">
+        <h2>归档列表</h2>
       </div>
       <div class="toolbar-right">
         <el-button class="btn-plain" @click="fetchArchives">刷新</el-button>
@@ -74,10 +73,9 @@
       </el-table-column>
     </el-table>
 
-    <!-- 公示管理 -->
     <div class="table-toolbar">
-        <div class="toolbar-left">
-          <h2>公示管理</h2>
+      <div class="toolbar-left">
+        <h2>公示管理</h2>
       </div>
       <div class="toolbar-right">
         <el-button class="btn-main" @click="openCreateDialog(null)">新建公示</el-button>
@@ -97,7 +95,7 @@
           style="width: 120px"
         >
           <el-option label="进行中" value="active" />
-          <el-option label="已结束" value="closed" />
+          <el-option label="已关闭" value="closed" />
         </el-select>
         <el-select
           v-model="announcementFilters.grade"
@@ -152,18 +150,16 @@
           <el-button link type="primary" @click="openEditDialog(row)">编辑</el-button>
           <el-button
             link
-            type="warning"
-            :disabled="isAnnouncementClosed(row)"
-            @click="handleClose(row)"
+            :type="isAnnouncementActive(row) ? 'warning' : 'success'"
+            @click="isAnnouncementActive(row) ? handleClose(row) : handleReopen(row)"
           >
-            关闭
+            {{ isAnnouncementActive(row) ? '关闭' : '启用' }}
           </el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 公示创建/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -178,7 +174,76 @@
         :label-position="dialogLabelPosition"
       >
         <el-form-item label="公示标题" prop="title">
-          <el-input v-model.trim="form.title" maxlength="50" show-word-limit placeholder="请输入公示标题" />
+          <el-input
+            v-model.trim="form.title"
+            maxlength="50"
+            show-word-limit
+            placeholder="请输入公示标题"
+          />
+        </el-form-item>
+        <el-form-item label="归档记录" prop="archive_id">
+          <el-select
+            v-model="form.archive_id"
+            filterable
+            clearable
+            placeholder="请选择归档记录"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in archiveOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="年级" prop="grade">
+          <el-select
+            v-model="form.grade"
+            clearable
+            placeholder="请选择年级"
+            style="width: 100%"
+          >
+            <el-option v-for="item in gradeOptions" :key="item" :label="`${item}级`" :value="item" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="班级范围">
+          <el-select
+            v-model="form.classIds"
+            multiple
+            filterable
+            clearable
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="不选默认全年级"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in classOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开始时间" prop="startAt">
+          <el-date-picker
+            v-model="form.startAt"
+            type="datetime"
+            placeholder="请选择开始时间"
+            style="width: 100%"
+            :disabled-date="disableStartDate"
+          />
+        </el-form-item>
+        <el-form-item label="结束时间" prop="endAt">
+          <el-date-picker
+            v-model="form.endAt"
+            type="datetime"
+            placeholder="请选择结束时间"
+            style="width: 100%"
+            :disabled-date="disableEndDate"
+            :disabled-time="disableEndTime"
+          />
         </el-form-item>
       </el-form>
 
@@ -195,12 +260,9 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useAuthStore } from '@/stores/auth'
 import archiveService from '@/services/archiveService'
 import announcementService from '@/services/announcementService'
-
-const authStore = useAuthStore()
-const currentUserId = computed(() => authStore.user?.id || null)
+import { CLASSMAP } from '@/utils/classMap'
 
 const archives = ref([])
 const announcements = ref([])
@@ -220,19 +282,15 @@ const form = reactive({
   classIds: [],
   startAt: null,
   endAt: null,
-  showFields: [],
 })
 
 const rules = {
   title: [{ required: true, message: '请输入公示标题', trigger: 'blur' }],
   archive_id: [{ required: true, message: '请选择归档记录', trigger: 'change' }],
-  grade: [{ required: true, message: '请输入年级', trigger: 'change' }],
+  grade: [{ required: true, message: '请选择年级', trigger: 'change' }],
   startAt: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
   endAt: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
-  showFields: [{ type: 'array', required: true, message: '请选择展示字段', trigger: 'change' }],
 }
-
-const classOptions = ref([])
 
 const archiveFilters = reactive({
   keyword: '',
@@ -259,8 +317,6 @@ const announcementPagination = reactive({
   total: 0,
 })
 
-const pageSizeOptions = [10, 20, 50]
-
 const windowWidth = ref(typeof window === 'undefined' ? 1200 : window.innerWidth)
 const windowHeight = ref(typeof window === 'undefined' ? 900 : window.innerHeight)
 
@@ -269,13 +325,6 @@ const updateWindowSize = () => {
   windowWidth.value = window.innerWidth
   windowHeight.value = window.innerHeight
 }
-
-const showFieldOptions = [
-  { label: '姓名', value: 'name' },
-  { label: '班级', value: 'class' },
-  { label: '分数', value: 'score' },
-  { label: '排名', value: 'rank' },
-]
 
 const dialogTitle = computed(() => (dialogMode.value === 'edit' ? '编辑公示' : '新建公示'))
 const dialogWidth = computed(() => {
@@ -302,6 +351,9 @@ const archiveOptions = computed(() =>
 
 const gradeOptions = computed(() => {
   const set = new Set()
+  CLASSMAP.forEach((item) => {
+    if (item?.grade) set.add(String(item.grade))
+  })
   archives.value.forEach((item) => {
     if (item?.grade) set.add(String(item.grade))
   })
@@ -310,6 +362,24 @@ const gradeOptions = computed(() => {
     if (scopeGrade) set.add(String(scopeGrade))
   })
   return Array.from(set).sort((a, b) => Number(a) - Number(b))
+})
+
+const classOptions = computed(() => {
+  if (!form.grade) {
+    return CLASSMAP.map((item) => ({
+      label: item.label,
+      value: String(item.class_id),
+      grade: String(item.grade),
+    }))
+  }
+
+  return CLASSMAP
+    .filter((item) => String(item.grade) === String(form.grade))
+    .map((item) => ({
+      label: item.label,
+      value: String(item.class_id),
+      grade: String(item.grade),
+    }))
 })
 
 const filteredAnnouncements = computed(() => {
@@ -322,11 +392,6 @@ const filteredAnnouncements = computed(() => {
     : []
 
   return list.filter((item) => {
-    if (currentUserId.value) {
-      if (item?.created_by && item.created_by !== currentUserId.value) return false
-      if (item?.teacher_id && item.teacher_id !== currentUserId.value) return false
-    }
-
     const scope = item?.scope || {}
     const rowGrade = scope.grade ?? item?.grade
     const rowClassIds = scope.class_ids || item?.class_ids || []
@@ -334,9 +399,9 @@ const filteredAnnouncements = computed(() => {
     if (gradeFilter && String(rowGrade) !== String(gradeFilter)) return false
 
     if (statusFilter) {
-      const closed = isAnnouncementClosed(item)
-      if (statusFilter === 'active' && closed) return false
-      if (statusFilter === 'closed' && !closed) return false
+      const active = isAnnouncementActive(item)
+      if (statusFilter === 'active' && !active) return false
+      if (statusFilter === 'closed' && active) return false
     }
 
     if (rangeStart && rangeEnd) {
@@ -374,12 +439,7 @@ const filteredArchives = computed(() => {
       if (archiveFilters.announced === 'pending' && isAnnounced) return false
     }
     if (keyword) {
-      const fields = [
-        item?.archive_name,
-        item?.archive_id,
-        item?.term,
-        item?.grade,
-      ]
+      const fields = [item?.archive_name, item?.archive_id, item?.term, item?.grade]
       const haystack = fields.filter(Boolean).join(' ').toLowerCase()
       if (!haystack.includes(keyword)) return false
     }
@@ -450,26 +510,14 @@ const formatScope = (row) => {
   return `${gradeText} / ${classText}`
 }
 
-const isAnnouncementClosed = (row) => {
-  if (!row) return false
-  if (row.status && ['closed', 'inactive', 'ended'].includes(row.status)) return true
-  if (row.end_at) {
-    const endTime = new Date(row.end_at).getTime()
-    return Number.isFinite(endTime) && endTime < Date.now()
-  }
-  return false
-}
+const isAnnouncementActive = (row) => String(row?.status || '').toLowerCase() === 'active'
 
 const getAnnouncementStatusText = (row) => {
   if (!row) return '-'
-  if (row.status) return row.status
-  return isAnnouncementClosed(row) ? '已结束' : '进行中'
+  return isAnnouncementActive(row) ? '进行中' : '已关闭'
 }
 
-const getAnnouncementTagType = (row) => {
-  if (isAnnouncementClosed(row)) return 'info'
-  return 'success'
-}
+const getAnnouncementTagType = (row) => (isAnnouncementActive(row) ? 'success' : 'info')
 
 const normalizeNumber = (value) => {
   const num = Number(value)
@@ -497,7 +545,6 @@ const resolveDateRange = () => {
   return { startAt: startDate.toISOString(), endAt: endDate.toISOString() }
 }
 
-
 const disableStartDate = (time) => {
   if (!form.endAt) return false
   const endDate = new Date(form.endAt)
@@ -521,7 +568,6 @@ const disableEndTime = (date) => {
     date.getFullYear() === startDate.getFullYear() &&
     date.getMonth() === startDate.getMonth() &&
     date.getDate() === startDate.getDate()
-
   if (!sameDay) return {}
 
   const startHour = startDate.getHours()
@@ -548,7 +594,6 @@ const resetForm = () => {
   form.classIds = []
   form.startAt = null
   form.endAt = null
-  form.showFields = []
   editingId.value = null
 }
 
@@ -580,7 +625,6 @@ const openEditDialog = (announcement) => {
   form.classIds = Array.isArray(classIds) ? classIds.map((id) => String(id)) : []
   form.startAt = announcement.start_at ? new Date(announcement.start_at) : null
   form.endAt = announcement.end_at ? new Date(announcement.end_at) : null
-  form.showFields = Array.isArray(announcement.show_fields) ? [...announcement.show_fields] : []
   dialogVisible.value = true
 }
 
@@ -592,6 +636,11 @@ const buildPayload = () => {
   const title = form.title.trim()
   if (!title) {
     ElMessage.error('请输入公示标题')
+    return null
+  }
+
+  if (!form.archive_id) {
+    ElMessage.error('请选择归档记录')
     return null
   }
 
@@ -609,12 +658,7 @@ const buildPayload = () => {
   }
 
   if (new Date(startAt).getTime() >= new Date(endAt).getTime()) {
-    ElMessage.error('结束时间需晚于开始时间')
-    return null
-  }
-
-  if (!Array.isArray(form.showFields) || !form.showFields.length) {
-    ElMessage.error('请选择展示字段')
+    ElMessage.error('结束时间必须晚于开始时间')
     return null
   }
 
@@ -627,7 +671,6 @@ const buildPayload = () => {
     },
     start_at: startAt,
     end_at: endAt,
-    show_fields: [...form.showFields],
   }
 }
 
@@ -651,8 +694,7 @@ const submitForm = async () => {
     }
     ElMessage.success(dialogMode.value === 'edit' ? '公示已更新' : '公示已发布')
     dialogVisible.value = false
-    await fetchAnnouncements()
-    await fetchArchives()
+    await Promise.all([fetchAnnouncements(), fetchArchives()])
   } catch (error) {
     ElMessage.error(error?.message || '操作失败')
   } finally {
@@ -662,25 +704,42 @@ const submitForm = async () => {
 
 const handleDownload = (archive) => {
   if (!archive) return
-  const url = archive.download_url || archiveService.getDownloadUrl(archive.archive_id)
-  if (!url) {
+  const archiveId = archive.archive_id
+  if (!archiveId) {
     ElMessage.warning('下载地址不可用')
     return
   }
-  window.open(url, '_blank', 'noopener')
+  archiveService.downloadArchiveFile(archiveId, archive.archive_name).catch((error) => {
+    ElMessage.error(error?.message || '下载归档文件失败')
+  })
 }
 
 const handleClose = async (announcement) => {
   const targetId = announcement?.id || announcement?.announcement_id
   if (!targetId) return
   try {
-    await ElMessageBox.confirm('确定关闭该公示吗？', '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确认关闭该公示吗？', '提示', { type: 'warning' })
     await announcementService.closeAnnouncement(targetId)
     ElMessage.success('公示已关闭')
     await fetchAnnouncements()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       ElMessage.error(error?.message || '关闭失败')
+    }
+  }
+}
+
+const handleReopen = async (announcement) => {
+  const targetId = announcement?.id || announcement?.announcement_id
+  if (!targetId) return
+  try {
+    await ElMessageBox.confirm('确认启用该公示吗？', '提示', { type: 'warning' })
+    await announcementService.reopenAnnouncement(targetId)
+    ElMessage.success('公示已启用')
+    await fetchAnnouncements()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error?.message || '启用失败')
     }
   }
 }
@@ -748,24 +807,6 @@ watch(
   },
   { immediate: true }
 )
-
-const handleArchivePageChange = (page) => {
-  archivePagination.page = page
-}
-
-const handleArchiveSizeChange = (size) => {
-  archivePagination.size = size
-  archivePagination.page = 1
-}
-
-const handleAnnouncementPageChange = (page) => {
-  announcementPagination.page = page
-}
-
-const handleAnnouncementSizeChange = (size) => {
-  announcementPagination.size = size
-  announcementPagination.page = 1
-}
 
 onMounted(() => {
   updateWindowSize()

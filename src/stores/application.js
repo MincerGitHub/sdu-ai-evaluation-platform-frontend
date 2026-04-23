@@ -81,8 +81,8 @@ export const useApplicationStore = defineStore('application', () => {
                 attachments: formData.attachments ?? [],
                 category: currentCategory.value,
                 sub_type: currentSubType.value,
-                // version: formData.version, // version做不完了，不做了先
             };
+            if (formData.version) payload.version = formData.version
             const response = await applicationService.update(applicationId, payload);
             await fetchApplicationsByCategory();
             const resData = response.data ?? {};

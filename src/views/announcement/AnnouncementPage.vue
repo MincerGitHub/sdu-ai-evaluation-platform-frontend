@@ -5,10 +5,15 @@
     </header>
     <div v-loading="loading" class="download-list">
       <template v-if="downloadItems.length">
-        <a v-for="item in downloadItems" :key="item.id" :href="item.url" class="download-link" target="_blank"
-          rel="noopener noreferrer" :download="item.fileName" download>
+        <button
+          v-for="item in downloadItems"
+          :key="item.id"
+          type="button"
+          class="download-link"
+          @click="downloadAnnouncement(item)"
+        >
           - {{ item.label }}
-        </a>
+        </button>
       </template>
 
       <p v-else class="empty-text">暂无可下载的公示文件</p>
@@ -17,29 +22,51 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import archiveService from '@/services/archiveService'
+import announcementService from '@/services/announcementService'
 
 const loading = ref(false)
 const announcements = ref([])
+let refreshTimer = null
 
 const downloadItems = computed(() =>
   announcements.value
-    .filter((item) => item && (item.archive_id || item.download_url))
+    .filter((item) => item)
     .map((item, index) => {
-      const id = item.id ?? `${item.archive_id}-${index}`
-      const url = item.download_url || archiveService.getDownloadUrl(item.archive_id)
+      const id = item.id ?? item.announcement_id ?? `${item.archive_id}-${index}`
       const label = item.title || `公示文件 ${index + 1}`
       const fileName = `${label}.xlsx`
-      return { id, label, url, fileName }
+      return {
+        id,
+        label,
+        fileName,
+        archiveId: item.archive_id,
+        downloadUrl: item.download_url || '',
+      }
     })
 )
+
+const downloadAnnouncement = (item) => {
+  if (item?.archiveId) {
+    archiveService.downloadArchiveFile(item.archiveId, item.fileName).catch((error) => {
+      ElMessage.error(error?.message || '下载失败')
+    })
+    return
+  }
+
+  if (!item?.downloadUrl) {
+    ElMessage.warning('该公示暂不可下载')
+    return
+  }
+  window.open(item.downloadUrl, '_blank', 'noopener')
+}
 
 const fetchAnnouncements = async () => {
   loading.value = true
   try {
-    const response = await archiveService.getAnnouncements()
+    const response = await announcementService.getAnnouncements()
     announcements.value = Array.isArray(response?.data) ? response.data : []
   } catch (error) {
     announcements.value = []
@@ -49,7 +76,37 @@ const fetchAnnouncements = async () => {
   }
 }
 
-onMounted(fetchAnnouncements)
+const startAutoRefresh = () => {
+  stopAutoRefresh()
+  refreshTimer = window.setInterval(() => {
+    fetchAnnouncements()
+  }, 5000)
+}
+
+const stopAutoRefresh = () => {
+  if (!refreshTimer) return
+  window.clearInterval(refreshTimer)
+  refreshTimer = null
+}
+
+const handleWindowFocus = () => {
+  fetchAnnouncements()
+}
+
+onMounted(() => {
+  fetchAnnouncements()
+  startAutoRefresh()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('focus', handleWindowFocus)
+  }
+})
+
+onBeforeUnmount(() => {
+  stopAutoRefresh()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('focus', handleWindowFocus)
+  }
+})
 </script>
 
 <style scoped>
@@ -77,10 +134,14 @@ onMounted(fetchAnnouncements)
 }
 
 .download-link {
-  color: #b71c1c;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #9c0c13;
   font-size: 16px;
   line-height: 1.4;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .download-link:hover {

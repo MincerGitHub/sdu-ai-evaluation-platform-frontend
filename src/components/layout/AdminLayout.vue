@@ -30,13 +30,13 @@
           <el-menu-item index="/admin/dashboard">
             管理员首页
           </el-menu-item>
-          <el-menu-item index="/system/config">
+          <el-menu-item index="/admin/config">
             系统配置
           </el-menu-item>
-          <el-menu-item index="/system/logs">
+          <el-menu-item index="/admin/logs">
             系统日志
           </el-menu-item>
-          <el-menu-item index="/system/award-dicts">
+          <el-menu-item index="/admin/award-dicts">
             奖项字典
           </el-menu-item>
         </el-menu>

@@ -6,10 +6,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'NotFoundPage'
-}
+<script setup>
+defineOptions({
+  name: 'NotFoundPage',
+})
 </script>
 
 <style scoped>
