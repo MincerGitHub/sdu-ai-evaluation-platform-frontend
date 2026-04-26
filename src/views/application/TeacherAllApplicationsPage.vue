@@ -59,7 +59,13 @@
         <el-table-column prop="class_id" label="班级" width="100" />
         <el-table-column prop="student_account" label="学号" width="140" />
         <el-table-column prop="title" label="申报名称" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="project" label="项目" width="180" show-overflow-tooltip />
+        <el-table-column label="评审规则" min-width="360" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="rule-reference" :title="reviewRule(row)">
+              {{ reviewRule(row) || '-' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="审核状态" width="130">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" size="small">
@@ -112,6 +118,7 @@ import statisticService from '@/services/statisticService'
 import { APPLICATION_STATUS_META } from '@/utils/constants'
 import ReviewDetailDialog from '@/components/review/ReviewDetailDialog.vue'
 import { CLASSMAP } from '@/utils/classMap'
+import { formatAwardRuleByUid } from '@/utils/dealAwardUid'
 
 const loading = ref(false)
 const rows = ref([])
@@ -172,6 +179,10 @@ const resetFilters = async () => {
   filters.status = ''
   filters.class_id = ''
   await fetchList(1)
+}
+
+const reviewRule = (row) => {
+  return row?.award_rule?.rule_name || row?.award_rule_name || formatAwardRuleByUid(row?.award_uid) || row?.project
 }
 
 const onSelectionChange = (selection) => {
@@ -288,5 +299,13 @@ onMounted(async () => {
 
 .audit-empty {
   color: #909399;
+}
+
+.rule-reference {
+  display: block;
+  overflow: hidden;
+  color: #606266;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

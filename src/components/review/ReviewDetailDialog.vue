@@ -21,7 +21,7 @@
           <el-descriptions-item label="分数">{{ detail.score ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="发生日期">{{ detail.occurred_at || '-' }}</el-descriptions-item>
           <el-descriptions-item label="申报标题" :span="3">{{ detail.title || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="申报项目" :span="3">
+          <el-descriptions-item label="评审规则" :span="3">
             <div class="project-display">{{ projectDisplayText }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="参考分">{{ currentScoreInfo?.score ?? '-' }}</el-descriptions-item>
@@ -113,6 +113,12 @@
                   {{ aiReport.identity_check?.matched ? '姓名匹配' : '姓名未匹配' }}
                 </el-tag>
                 <div class="section-subtext">期望姓名：{{ aiReport.identity_check?.expected_name || '-' }}</div>
+                <div class="section-subtext">
+                  匹配范围：{{ joinText(aiReport.identity_check?.expected_candidates) }}
+                </div>
+                <div class="section-subtext">
+                  OCR疑似姓名：{{ joinText(aiReport.identity_check?.recognized_name_candidates) }}
+                </div>
               </div>
 
               <div class="ai-section">
@@ -288,8 +294,13 @@ function checkStatusText(status) {
     pass: '通过',
     failed: '失败',
     unknown: '未知',
+    skipped: '不校验',
   }
   return map[status] || status || '-'
+}
+
+function joinText(value) {
+  return Array.isArray(value) && value.length ? value.join('、') : '-'
 }
 
 function formatDateTime(value) {
@@ -369,6 +380,10 @@ function resolveProjectLabelsByPath(path = [], options = []) {
 
 function resolveProjectDisplay(payload, contextRow) {
   const directCandidates = [
+    payload?.award_rule?.rule_name,
+    payload?.award_rule_name,
+    contextRow?.award_rule?.rule_name,
+    contextRow?.award_rule_name,
     payload?.project_name,
     payload?.project,
     payload?.award_name,

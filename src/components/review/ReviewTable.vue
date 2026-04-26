@@ -32,10 +32,16 @@
     >
       <!-- 多选列保留 -->
       <el-table-column type="selection" width="50" />
-      <!-- 申报名称 -->
       <el-table-column label="申报名称" min-width="220" show-overflow-tooltip>
         <template #default="{ row }">
           {{ row.title }}
+        </template>
+      </el-table-column>
+      <el-table-column label="评审规则" min-width="360" show-overflow-tooltip>
+        <template #default="{ row }">
+          <span class="rule-reference" :title="referenceRule(row)">
+            {{ referenceRule(row) || '-' }}
+          </span>
         </template>
       </el-table-column>
       <!-- 状态，与 ApplicationTable 一致的样式 -->
@@ -74,6 +80,7 @@
 import { ref } from 'vue'
 import { useReviewStore } from '@/stores/review'
 import { APPLICATION_STATUS_META } from '@/utils/constants'
+import { formatAwardRuleByUid } from '@/utils/dealAwardUid'
 
 const store = useReviewStore()
 defineProps({
@@ -100,6 +107,10 @@ function statusLabel(status) {
   const meta = APPLICATION_STATUS_META[status]
   return meta?.label || status || '-'
 }
+
+function referenceRule(row) {
+  return row?.award_rule?.rule_name || row?.award_rule_name || formatAwardRuleByUid(row?.award_uid)
+}
 </script>
 
 <style scoped>
@@ -124,5 +135,13 @@ function statusLabel(status) {
 .pending-count {
   font-size: 14px;
   color: #606266;
+}
+
+.rule-reference {
+  display: block;
+  overflow: hidden;
+  color: #606266;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

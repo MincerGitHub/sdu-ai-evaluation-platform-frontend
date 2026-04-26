@@ -49,6 +49,18 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="申报ID">
+          <el-input-number
+            v-model="form.applicationId"
+            :min="1"
+            :precision="0"
+            :step="1"
+            controls-position="right"
+            placeholder="如申诉涉及某条申报，可填写"
+            style="width: 100%"
+          />
+        </el-form-item>
+
         <el-form-item label="申诉内容" required>
           <el-input
             v-model.trim="form.content"
@@ -95,6 +107,10 @@
         <div class="detail-row">
           <span class="label">状态：</span>
           <span>{{ getStatusText(currentAppeal) }}</span>
+        </div>
+        <div class="detail-row" v-if="currentAppeal.application_id">
+          <span class="label">申报ID：</span>
+          <span>{{ currentAppeal.application_id }}</span>
         </div>
         <div class="detail-row">
           <span class="label">内容：</span>
@@ -151,6 +167,7 @@ const attachments = ref([])
 let announcementRefreshTimer = null
 const form = reactive({
   announcementId: null,
+  applicationId: null,
   content: '',
 })
 
@@ -209,6 +226,7 @@ const getAttachmentName = (item, index) => {
 
 const resetCreateForm = () => {
   form.content = ''
+  form.applicationId = null
   attachments.value = []
   if (announcementOptions.value.length) {
     form.announcementId = announcementOptions.value[0].id
@@ -358,6 +376,7 @@ const submitAppeal = async () => {
   try {
     await appealService.create({
       announcement_id: form.announcementId,
+      application_id: form.applicationId || null,
       content: form.content,
       attachments: attachments.value.map((item) => ({ file_id: item.file_id })),
     })

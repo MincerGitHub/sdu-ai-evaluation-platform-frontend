@@ -26,9 +26,21 @@
       <el-table-column prop="total_count" label="总申报数" width="120" />
       <el-table-column prop="rejected_count" label="驳回数" width="100" />
       <el-table-column prop="pending_count" label="待审数" width="100" />
-      <el-table-column prop="total_score" label="total_score" width="120" />
-      <el-table-column prop="average_score" label="average_score" width="120" />
-      <el-table-column prop="actual_score" label="actual_score" width="120" />
+      <el-table-column prop="actual_score" label="官方总分" width="110" />
+      <el-table-column prop="raw_total_score" label="原始总分" width="110" />
+      <el-table-column prop="overflow_score" label="超额分" width="100" />
+      <el-table-column label="身心" width="90">
+        <template #default="{ row }">{{ getCategoryScore(row, 'physical_mental_score') }}</template>
+      </el-table-column>
+      <el-table-column label="文艺" width="90">
+        <template #default="{ row }">{{ getCategoryScore(row, 'art_score') }}</template>
+      </el-table-column>
+      <el-table-column label="劳动" width="90">
+        <template #default="{ row }">{{ getCategoryScore(row, 'labor_score') }}</template>
+      </el-table-column>
+      <el-table-column label="创新" width="90">
+        <template #default="{ row }">{{ getCategoryScore(row, 'innovation_score') }}</template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
@@ -72,6 +84,11 @@ const resetFilters = async () => {
   query.grade = ''
   query.class_id = ''
   await fetchStatistics()
+}
+
+const getCategoryScore = (row, key) => {
+  const value = row?.score_summary?.category_scores?.[key]
+  return Number(value || 0)
 }
 
 onMounted(fetchStatistics)

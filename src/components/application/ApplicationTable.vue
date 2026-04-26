@@ -16,6 +16,13 @@
       row-key="application_id"
     >
       <el-table-column prop="title" label="申报名称" min-width="220" show-overflow-tooltip />
+      <el-table-column label="评审规则" min-width="360" show-overflow-tooltip>
+        <template #default="{ row }">
+          <span class="rule-reference" :title="reviewRule(row)">
+            {{ reviewRule(row) || '-' }}
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column prop="score" label="分数" width="100" align="center">
         <template #default="{ row }">
           {{ row.score ?? '—' }}
@@ -55,6 +62,7 @@ import { useApplicationStore } from '@/stores/application'
 import applicationService from '@/services/applicationService'
 import { computed } from 'vue'
 import { APPLICATION_STATUS_META, APPLICATION_STATUSES } from '@/utils/constants'
+import { formatAwardRuleByUid } from '@/utils/dealAwardUid'
 
 const store = useApplicationStore()
 const applications = computed(() => store.applications)
@@ -80,6 +88,10 @@ function statusLabel(status) {
 function statusTagType(status) {
   const meta = APPLICATION_STATUS_META[status]
   return meta?.tagType || 'info'
+}
+
+function reviewRule(row) {
+  return row?.award_rule?.rule_name || row?.award_rule_name || formatAwardRuleByUid(row?.award_uid)
 }
 
 // 删除
@@ -132,5 +144,13 @@ async function handleEdit(row) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.rule-reference {
+  display: block;
+  overflow: hidden;
+  color: #606266;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

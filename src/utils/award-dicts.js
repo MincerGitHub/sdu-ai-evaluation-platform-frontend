@@ -574,7 +574,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincial_secondPrize', name: '省级二等奖项目', children: [
-                                            { uid: 212, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 2, maxScore: 2 },
+                                            { uid: 212, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 2, maxScore: 2 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 213, id: 'first_to_third_place', name: '前三位成员', score: 2, maxScore: 2 },
@@ -587,7 +587,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincialThirdPrize_and_universityFirstPrize', name: '省级三等奖项目和校级一等奖项目', children: [
-                                            { uid: 217, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1.5, maxScore: 1.5 },
+                                            { uid: 217, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1.5, maxScore: 1.5 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 218, id: 'first_to_third_place', name: '前三位成员', score: 1.5, maxScore: 1.5 },
@@ -599,7 +599,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'university_secondPrize', name: '校级二等奖项目', children: [
-                                            { uid: 221, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1, maxScore: 1 },
+                                            { uid: 221, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1, maxScore: 1 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 222, id: 'first_to_third_place', name: '前三位成员', score: 1, maxScore: 1 },
@@ -610,7 +610,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'universityThirdPrize_and_departmentFirstPrize', name: '校级三等奖项目和院级一等奖项目', children: [
-                                            { uid: 224, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.5, maxScore: 0.5 },
+                                            { uid: 224, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.5, maxScore: 0.5 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 225, id: 'first_to_third_place', name: '前三位成员', score: 0.5, maxScore: 0.5 },
@@ -647,7 +647,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'nationalFirstPrize_provincialFirstPrize', name: '国家三等奖项目与省级一等奖项目', children: [
-                                            { uid: 233, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1.25, maxScore: 1.25 },
+                                            { uid: 233, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1.25, maxScore: 1.25 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 234, id: 'first_to_third_place', name: '前三位成员', score: 1.25, maxScore: 1.25 },
@@ -660,7 +660,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincial_secondPrize', name: '省级二等奖项目', children: [
-                                            { uid: 238, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1, maxScore: 1 },
+                                            { uid: 238, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1, maxScore: 1 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 239, id: 'first_to_third_place', name: '前三位成员', score: 1, maxScore: 1 },
@@ -673,7 +673,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincialThirdPrize_and_universityFirstPrize', name: '省级三等奖项目和校级一等奖项目', children: [
-                                            { uid: 243, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.75, maxScore: 0.75 },
+                                            { uid: 243, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.75, maxScore: 0.75 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 244, id: 'first_to_third_place', name: '前三位成员', score: 0.75, maxScore: 0.75 },
@@ -685,7 +685,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'university_secondPrize', name: '校级二等奖项目', children: [
-                                            { uid: 247, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.5, maxScore: 0.5 },
+                                            { uid: 247, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.5, maxScore: 0.5 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 248, id: 'first_to_third_place', name: '前三位成员', score: 0.5, maxScore: 0.5 },
@@ -696,7 +696,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'universityThirdPrize_and_departmentFirstPrize', name: '校级三等奖项目和院级一等奖项目', children: [
-                                            { uid: 250, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.25, maxScore: 0.25 },
+                                            { uid: 250, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.25, maxScore: 0.25 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 251, id: 'first_to_third_place', name: '前三位成员', score: 0.25, maxScore: 0.25 },
@@ -711,7 +711,7 @@ export const CATEGORY_TREE = [
                                 id: 'B_B*_competition', name: 'B(B*)级创新创业竞赛', children: [
                                     {
                                         id: 'national_firstPrize', name: '国家一等奖项目', children: [
-                                            { uid: 253, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1.5, maxScore: 1.5 },
+                                            { uid: 253, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1.5, maxScore: 1.5 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 254, id: 'first_to_third_place', name: '前三位成员', score: 1.5, maxScore: 1.5 },
@@ -723,7 +723,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'national_secondPrize', name: '国家二等奖项目', children: [
-                                            { uid: 257, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1, maxScore: 1 },
+                                            { uid: 257, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1, maxScore: 1 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 258, id: 'first_to_third_place', name: '前三位成员', score: 1, maxScore: 1 },
@@ -735,7 +735,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'nationalFirstPrize_provincialFirstPrize', name: '国家三等奖项目与省级一等奖项目', children: [
-                                            { uid: 261, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.8333, maxScore: 0.8333 },
+                                            { uid: 261, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.8333, maxScore: 0.8333 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 262, id: 'first_to_third_place', name: '前三位成员', score: 0.8333, maxScore: 0.8333 },
@@ -747,7 +747,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincial_secondPrize', name: '省级二等奖项目', children: [
-                                            { uid: 265, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.6667, maxScore: 0.6667 },
+                                            { uid: 265, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.6667, maxScore: 0.6667 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 266, id: 'first_to_third_place', name: '前三位成员', score: 0.6667, maxScore: 0.6667 },
@@ -759,7 +759,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincialThirdPrize_and_universityFirstPrize', name: '省级三等奖项目和校级一等奖项目', children: [
-                                            { uid: 269, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.5, maxScore: 0.5 },
+                                            { uid: 269, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.5, maxScore: 0.5 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 270, id: 'first_to_third_place', name: '前三位成员', score: 0.5, maxScore: 0.5 },
@@ -771,7 +771,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'university_secondPrize', name: '校级二等奖项目', children: [
-                                            { uid: 273, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.3333, maxScore: 0.3333 },
+                                            { uid: 273, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.3333, maxScore: 0.3333 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 274, id: 'first_to_third_place', name: '前三位成员', score: 0.3333, maxScore: 0.3333 },
@@ -782,7 +782,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'universityThirdPrize_and_departmentFirstPrize', name: '校级三等奖项目和院级一等奖项目', children: [
-                                            { uid: 276, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.1667, maxScore: 0.1667 },
+                                            { uid: 276, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.1667, maxScore: 0.1667 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 277, id: 'first_to_third_place', name: '前三位成员', score: 0.1667, maxScore: 0.1667 },
@@ -797,7 +797,7 @@ export const CATEGORY_TREE = [
                                 id: 'C_competition', name: 'C级创新创业竞赛', children: [
                                     {
                                         id: 'national_firstPrize', name: '国家一等奖项目', children: [
-                                            { uid: 279, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 1.125, maxScore: 1.125 },
+                                            { uid: 279, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 1.125, maxScore: 1.125 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 280, id: 'first_to_third_place', name: '前三位成员', score: 1.125, maxScore: 1.125 },
@@ -808,7 +808,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'national_secondtPrize', name: '国家二等奖项目', children: [
-                                            { uid: 282, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.75, maxScore: 0.75 },
+                                            { uid: 282, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.75, maxScore: 0.75 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 283, id: 'first_to_third_place', name: '前三位成员', score: 0.75, maxScore: 0.75 },
@@ -819,7 +819,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'nationalFirstPrize_provincialFirstPrize', name: '国家三等奖项目与省级一等奖项目', children: [
-                                            { id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.625, maxScore: 0.625 },
+                                            { id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.625, maxScore: 0.625 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 285, id: 'first_to_third_place', name: '前三位成员', score: 0.625, maxScore: 0.625 },
@@ -830,7 +830,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincial_secondPrize', name: '省级二等奖项目', children: [
-                                            { uid: 287, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.5, maxScore: 0.5 }, // 修正：原288→287
+                                            { uid: 287, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.5, maxScore: 0.5 }, // 修正：原288→287
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 288, id: 'first_to_third_place', name: '前三位成员', score: 0.5, maxScore: 0.5 }, // 后续uid依次顺延
@@ -841,7 +841,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'provincialThirdPrize_and_universityFirstPrize', name: '省级三等奖项目和校级一等奖项目', children: [
-                                            { uid: 290, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.375, maxScore: 0.375 },
+                                            { uid: 290, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.375, maxScore: 0.375 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 291, id: 'first_to_third_place', name: '前三位成员', score: 0.375, maxScore: 0.375 },
@@ -852,7 +852,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'university_secondPrize', name: '校级二等奖项目', children: [
-                                            { uid: 293, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.25, maxScore: 0.25 },
+                                            { uid: 293, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.25, maxScore: 0.25 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 294, id: 'first_to_third_place', name: '前三位成员', score: 0.25, maxScore: 0.25 },
@@ -863,7 +863,7 @@ export const CATEGORY_TREE = [
                                     },
                                     {
                                         id: 'universityThirdPrize_and_departmentFirstPrize', name: '校级三等奖项目和院级一等奖项目', children: [
-                                            { uid: 296, id: 'less_than_three_undergraduate', name: '成员少于三名本科生', score: 0.125, maxScore: 0.125 },
+                                            { uid: 296, id: 'less_than_three_undergraduate', name: '成员少于等于三名本科生', score: 0.125, maxScore: 0.125 },
                                             {
                                                 id: 'more_than_three_undergraduate', name: '成员多于三名本科生', children: [
                                                     { uid: 297, id: 'first_to_third_place', name: '前三位成员', score: 0.125, maxScore: 0.125 },

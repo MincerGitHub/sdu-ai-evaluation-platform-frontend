@@ -45,6 +45,25 @@ const APPLICATION_STATUS_META = {
   },
 }
 
+const SCORE_CATEGORY_META = {
+  physical_mental: {
+    label: '身心素养',
+    maxScore: 15,
+  },
+  art: {
+    label: '文艺素养',
+    maxScore: 15,
+  },
+  labor: {
+    label: '劳动素养',
+    maxScore: 25,
+  },
+  innovation: {
+    label: '创新素养',
+    maxScore: 45,
+  },
+}
+
 const ERROR_CODES = {
   SUCCESS: 0,
   GENERAL_FAILURE: 1000,
@@ -64,5 +83,6 @@ export {
   ROLES,
   APPLICATION_STATUSES,
   APPLICATION_STATUS_META,
+  SCORE_CATEGORY_META,
   ERROR_CODES,
 }

@@ -103,6 +103,36 @@
             />
           </el-form-item>
 
+          <el-form-item label="分数处理">
+            <div class="score-action">
+              <el-select v-model="processForm.score_action" style="width: 220px">
+                <el-option label="不改分" value="none" />
+                <el-option label="取消某申报得分" value="cancel_application" />
+                <el-option label="调整某申报分数" value="adjust_score" />
+              </el-select>
+              <el-input-number
+                v-if="processForm.score_action !== 'none'"
+                v-model="processForm.application_id"
+                :min="1"
+                :step="1"
+                :precision="0"
+                controls-position="right"
+                placeholder="申报ID"
+                style="width: 180px"
+              />
+              <el-input-number
+                v-if="processForm.score_action === 'adjust_score'"
+                v-model="processForm.score"
+                :min="0"
+                :step="0.5"
+                :precision="2"
+                controls-position="right"
+                placeholder="调整后分数"
+                style="width: 180px"
+              />
+            </div>
+          </el-form-item>
+
           <el-form-item label="邮件">
             <div class="mail-config">
               <div class="mail-config-row">
@@ -161,6 +191,9 @@ const processForm = reactive({
   result_comment: '',
   sendEmail: false,
   emailTo: '',
+  score_action: 'none',
+  application_id: null,
+  score: null,
 })
 
 const getStatusText = (row) => {
@@ -216,6 +249,9 @@ const openProcess = (row) => {
   processForm.result_comment = row?.result_comment || ''
   processForm.sendEmail = false
   processForm.emailTo = resolveStudentEmail(row)
+  processForm.score_action = row?.score_action || 'none'
+  processForm.application_id = row?.application_id || null
+  processForm.score = row?.adjusted_score ?? null
   processDialogVisible.value = true
 }
 
@@ -231,12 +267,29 @@ const submitDecision = async (result) => {
     ElMessage.warning('请填写邮件接收地址')
     return
   }
+  if (result === 'approved' && processForm.score_action !== 'none' && !processForm.application_id) {
+    ElMessage.warning('请填写要处理的申报ID')
+    return
+  }
+  if (result === 'approved' && processForm.score_action === 'adjust_score' && processForm.score == null) {
+    ElMessage.warning('请填写调整后的分数')
+    return
+  }
 
   const response = await store.processAppeal(
     selectedAppeal.value.id,
     {
       result,
       result_comment: processForm.result_comment || null,
+      score_action: result === 'approved' ? processForm.score_action : 'none',
+      application_id:
+        result === 'approved' && processForm.score_action !== 'none'
+          ? processForm.application_id
+          : selectedAppeal.value.application_id || null,
+      score:
+        result === 'approved' && processForm.score_action === 'adjust_score'
+          ? processForm.score
+          : null,
     },
     {
       sendEmail: processForm.sendEmail,
@@ -336,5 +389,12 @@ onMounted(() => {
 
 .mail-tip {
   color: #606266;
+}
+
+.score-action {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 </style>
