@@ -14,6 +14,8 @@ export const useAppealStore = defineStore('appeal', () => {
         page: 1,
         size: 10,
         status: '',
+        student_name: '',
+        keyword: '',
     })
 
     function setQuery(patch = {}) {
@@ -34,6 +36,12 @@ export const useAppealStore = defineStore('appeal', () => {
             }
             if (query.value.status) {
                 params.status = query.value.status
+            }
+            if (query.value.student_name) {
+                params.student_name = query.value.student_name
+            }
+            if (query.value.keyword) {
+                params.keyword = query.value.keyword
             }
             const res = await appealService.getList(params)
             const payload = res.data

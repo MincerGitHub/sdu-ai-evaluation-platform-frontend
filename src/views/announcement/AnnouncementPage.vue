@@ -5,15 +5,18 @@
     </header>
     <div v-loading="loading" class="download-list">
       <template v-if="downloadItems.length">
-        <button
+        <div
           v-for="item in downloadItems"
           :key="item.id"
-          type="button"
-          class="download-link"
-          @click="downloadAnnouncement(item)"
+          class="announcement-row"
         >
-          - {{ item.label }}
-        </button>
+          <button type="button" class="download-link" @click="downloadAnnouncement(item)">
+            {{ item.label }}
+          </button>
+          <button v-if="isStudent" type="button" class="report-link" @click="openReport(item)">
+            查看个人报告
+          </button>
+        </div>
       </template>
 
       <p v-else class="empty-text">暂无可下载的公示文件</p>
@@ -24,12 +27,16 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import archiveService from '@/services/archiveService'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import announcementService from '@/services/announcementService'
 
+const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
 const announcements = ref([])
 let refreshTimer = null
+const isStudent = computed(() => authStore.isStudent)
 
 const downloadItems = computed(() =>
   announcements.value
@@ -49,18 +56,21 @@ const downloadItems = computed(() =>
 )
 
 const downloadAnnouncement = (item) => {
-  if (item?.archiveId) {
-    archiveService.downloadArchiveFile(item.archiveId, item.fileName).catch((error) => {
-      ElMessage.error(error?.message || '下载失败')
-    })
-    return
-  }
-
-  if (!item?.downloadUrl) {
+  if (!item?.id) {
     ElMessage.warning('该公示暂不可下载')
     return
   }
-  window.open(item.downloadUrl, '_blank', 'noopener')
+  announcementService.downloadAnnouncementFile(item.id, item.fileName).catch((error) => {
+    ElMessage.error(error?.message || '下载失败')
+  })
+}
+
+const openReport = (item) => {
+  if (!item?.id) {
+    ElMessage.warning('该公示暂不可查看报告')
+    return
+  }
+  router.push({ name: 'StudentAnnouncementReport', params: { announcementId: item.id } })
 }
 
 const fetchAnnouncements = async () => {
@@ -133,6 +143,13 @@ onBeforeUnmount(() => {
   padding-left: 8px;
 }
 
+.announcement-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
 .download-link {
   border: 0;
   padding: 0;
@@ -146,6 +163,22 @@ onBeforeUnmount(() => {
 
 .download-link:hover {
   text-decoration: underline;
+}
+
+.report-link {
+  border: 1px solid rgba(156, 12, 19, 0.22);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: #fff7f7;
+  color: #9c0c13;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.report-link:hover {
+  border-color: #9c0c13;
+  background: #fff0f0;
 }
 
 .empty-text {

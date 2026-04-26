@@ -11,6 +11,15 @@
       <div class="toolbar-right">
         <el-button class="btn-main" @click="exportList">导出</el-button>
         <el-button class="btn-plain" @click="refreshList">刷新</el-button>
+        <el-input
+          v-model.trim="studentNameFilter"
+          placeholder="按学生姓名/学号搜索"
+          clearable
+          style="width: 220px"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
+        <el-button class="btn-plain" @click="handleSearch">搜索</el-button>
         <el-select
           v-model="statusFilter"
           placeholder="状态筛选"
@@ -72,6 +81,9 @@
           <el-descriptions-item label="学生">
             {{ selectedAppeal.student_name || `学生${selectedAppeal.student_id || ''}` }}
           </el-descriptions-item>
+          <el-descriptions-item label="匿名">
+            {{ selectedAppeal.is_anonymous ? '是' : '否' }}
+          </el-descriptions-item>
           <el-descriptions-item label="申诉内容">
             {{ selectedAppeal.content || '-' }}
           </el-descriptions-item>
@@ -110,16 +122,25 @@
                 <el-option label="取消某申报得分" value="cancel_application" />
                 <el-option label="调整某申报分数" value="adjust_score" />
               </el-select>
-              <el-input-number
+              <el-select
                 v-if="processForm.score_action !== 'none'"
                 v-model="processForm.application_id"
-                :min="1"
-                :step="1"
-                :precision="0"
-                controls-position="right"
-                placeholder="申报ID"
-                style="width: 180px"
-              />
+                filterable
+                remote
+                clearable
+                reserve-keyword
+                :remote-method="searchApplicationOptions"
+                :loading="applicationOptionLoading"
+                placeholder="搜索关联申报名称"
+                style="width: 360px"
+              >
+                <el-option
+                  v-for="item in applicationOptions"
+                  :key="item.application_id"
+                  :label="formatApplicationOption(item)"
+                  :value="item.application_id"
+                />
+              </el-select>
               <el-input-number
                 v-if="processForm.score_action === 'adjust_score'"
                 v-model="processForm.score"
@@ -180,12 +201,16 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAppealStore } from '@/stores/appeal'
+import appealService from '@/services/appealService'
 import fileService from '@/services/fileService'
 
 const store = useAppealStore()
 const statusFilter = ref('')
+const studentNameFilter = ref('')
 const processDialogVisible = ref(false)
 const selectedAppeal = ref(null)
+const applicationOptions = ref([])
+const applicationOptionLoading = ref(false)
 
 const processForm = reactive({
   result_comment: '',
@@ -238,6 +263,7 @@ const getAttachmentName = (item, index) => {
 
 const resolveStudentEmail = (row) => {
   if (!row) return ''
+  if (row.is_anonymous) return ''
   if (row.student_email) return row.student_email
   if (row.email) return row.email
   if (row.student_id) return `student${row.student_id}@example.com`
@@ -253,6 +279,7 @@ const openProcess = (row) => {
   processForm.application_id = row?.application_id || null
   processForm.score = row?.adjusted_score ?? null
   processDialogVisible.value = true
+  searchApplicationOptions(row?.student_name || '')
 }
 
 const closeProcessDialog = () => {
@@ -313,12 +340,48 @@ const handlePageChange = (nextPage) => {
 const handleStatusChange = () => {
   store.fetchAppeals({
     status: statusFilter.value || '',
+    student_name: studentNameFilter.value || '',
+    page: 1,
+  })
+}
+
+const handleSearch = () => {
+  store.fetchAppeals({
+    status: statusFilter.value || '',
+    student_name: studentNameFilter.value || '',
     page: 1,
   })
 }
 
 const refreshList = () => {
-  store.fetchAppeals()
+  store.fetchAppeals({
+    status: statusFilter.value || '',
+    student_name: studentNameFilter.value || '',
+  })
+}
+
+const searchApplicationOptions = async (keyword = '') => {
+  applicationOptionLoading.value = true
+  try {
+    const res = await appealService.searchApplicationOptions({
+      appeal_id: selectedAppeal.value?.id || undefined,
+      announcement_id: selectedAppeal.value?.announcement_id || undefined,
+      keyword: keyword || undefined,
+      limit: 30,
+    })
+    applicationOptions.value = Array.isArray(res?.data) ? res.data : []
+  } catch (error) {
+    applicationOptions.value = []
+    ElMessage.error(error?.message || '搜索申报失败')
+  } finally {
+    applicationOptionLoading.value = false
+  }
+}
+
+const formatApplicationOption = (item) => {
+  if (!item) return ''
+  const score = item.score == null ? '-' : item.score
+  return `${item.student_name || '-'} ${item.student_account || ''} / ${item.title || '-'} / ${score}分`
 }
 
 const csvEscape = (value) => {

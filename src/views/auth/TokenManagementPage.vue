@@ -80,7 +80,7 @@
             style="width: 100%"
           >
             <el-option
-              v-for="item in CLASSMAP"
+              v-for="item in classOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -109,6 +109,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import tokenService from '@/services/tokenService'
+import classService from '@/services/classService'
 import { CLASSMAP } from '@/utils/classMap'
 
 const loading = ref(false)
@@ -116,6 +117,7 @@ const creating = ref(false)
 const createDialogVisible = ref(false)
 
 const tokens = ref([])
+const classOptions = ref(CLASSMAP)
 
 const filters = reactive({
   status: '',
@@ -158,8 +160,17 @@ function formatDateTime(value) {
 function renderClassScope(classIds = []) {
   if (!classIds.length) return '-'
   return classIds
-    .map((id) => CLASSMAP.find((item) => item.value === id)?.label || `${id}班`)
+    .map((id) => classOptions.value.find((item) => item.value === id)?.label || `${id}班`)
     .join('、')
+}
+
+async function fetchClasses() {
+  try {
+    const rows = await classService.getClasses()
+    if (rows.length) classOptions.value = rows
+  } catch {
+    classOptions.value = CLASSMAP
+  }
 }
 
 async function fetchTokens() {
@@ -245,7 +256,10 @@ async function handleRevoke(row) {
   }
 }
 
-onMounted(fetchTokens)
+onMounted(() => {
+  fetchClasses()
+  fetchTokens()
+})
 </script>
 
 <style scoped>

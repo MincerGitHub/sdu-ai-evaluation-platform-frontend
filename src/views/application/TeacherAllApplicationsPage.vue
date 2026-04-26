@@ -115,6 +115,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import applicationService from '@/services/applicationService'
 import statisticService from '@/services/statisticService'
+import classService from '@/services/classService'
 import { APPLICATION_STATUS_META } from '@/utils/constants'
 import ReviewDetailDialog from '@/components/review/ReviewDetailDialog.vue'
 import { CLASSMAP } from '@/utils/classMap'
@@ -179,6 +180,15 @@ const resetFilters = async () => {
   filters.status = ''
   filters.class_id = ''
   await fetchList(1)
+}
+
+const loadClasses = async () => {
+  try {
+    const rows = await classService.getClasses()
+    if (rows.length) classOptions.value = rows
+  } catch {
+    classOptions.value = CLASSMAP
+  }
 }
 
 const reviewRule = (row) => {
@@ -257,6 +267,7 @@ const handleBatchArchive = async () => {
 }
 
 onMounted(async () => {
+  await loadClasses()
   await fetchList(1)
 })
 </script>

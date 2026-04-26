@@ -54,10 +54,11 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import teacherService from '@/services/teacherService'
+import classService from '@/services/classService'
 import { CLASSMAP } from '@/utils/classMap'
 
 const router = useRouter()
@@ -69,10 +70,11 @@ const taskStatus = ref('')
 const taskError = ref('')
 const downloadUrl = ref('')
 const downloadFileName = ref('')
+const classRows = ref(CLASSMAP)
 
 const gradeOptions = computed(() => {
   const set = new Map()
-  CLASSMAP.forEach((item) => {
+  classRows.value.forEach((item) => {
     if (!set.has(item.grade)) {
       set.set(item.grade, {
         value: item.grade,
@@ -85,8 +87,17 @@ const gradeOptions = computed(() => {
 
 const classOptions = computed(() => {
   if (!form.grade) return []
-  return CLASSMAP.filter((item) => Number(item.grade) === Number(form.grade))
+  return classRows.value.filter((item) => Number(item.grade) === Number(form.grade))
 })
+
+const loadClasses = async () => {
+  try {
+    const rows = await classService.getClasses()
+    if (rows.length) classRows.value = rows
+  } catch {
+    classRows.value = CLASSMAP
+  }
+}
 
 const form = reactive({
   grade: null,
@@ -192,6 +203,8 @@ const openDownload = () => {
     ElMessage.error(error?.message || '下载导出文件失败')
   })
 }
+
+onMounted(loadClasses)
 </script>
 
 <style scoped>

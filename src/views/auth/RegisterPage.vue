@@ -29,28 +29,23 @@
           />
         </el-form-item>
 
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" class="full-width">
-            <el-option label="学生" :value="ROLES.STUDENT" />
-            <el-option label="教师" :value="ROLES.TEACHER" />
-            <el-option label="管理员" :value="ROLES.ADMIN" />
-          </el-select>
-        </el-form-item>
-
         <el-form-item label="班级" prop="class_id">
           <el-select
             v-model="form.class_id"
             class="full-width"
-            :disabled="!isStudentRole"
             clearable
-            placeholder="学生角色必填"
+            placeholder="请选择班级"
           >
             <el-option v-for="item in classOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
 
         <el-form-item label="审核员身份" prop="is_reviewer">
-          <el-switch v-model="form.is_reviewer" :disabled="!isStudentRole" />
+          <el-switch v-model="form.is_reviewer" />
+        </el-form-item>
+
+        <el-form-item v-if="form.is_reviewer" label="激活码" prop="reviewer_token">
+          <el-input v-model="form.reviewer_token" placeholder="请输入老师分配的审核员激活码" />
         </el-form-item>
 
         <el-form-item label="邮箱" prop="email">
@@ -76,12 +71,13 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES } from '@/utils/constants'
 import { CLASSMAP } from '@/utils/classMap'
+import classService from '@/services/classService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -97,22 +93,21 @@ const form = reactive({
   role: ROLES.STUDENT,
   class_id: null,
   is_reviewer: false,
+  reviewer_token: '',
   email: '',
   phone: '',
 })
 
-const classOptions = CLASSMAP
-const isStudentRole = computed(() => form.role === ROLES.STUDENT)
+const classOptions = ref(CLASSMAP)
 
-watch(
-  () => form.role,
-  (role) => {
-    if (role !== ROLES.STUDENT) {
-      form.class_id = null
-      form.is_reviewer = false
-    }
+const loadClasses = async () => {
+  try {
+    const rows = await classService.getPublicClasses()
+    if (rows.length) classOptions.value = rows
+  } catch {
+    classOptions.value = CLASSMAP
   }
-)
+}
 
 const validateConfirmPassword = (_rule, value, callback) => {
   if (!value) {
@@ -127,8 +122,16 @@ const validateConfirmPassword = (_rule, value, callback) => {
 }
 
 const validateClassId = (_rule, value, callback) => {
-  if (isStudentRole.value && !value) {
-    callback(new Error('学生角色必须选择班级'))
+  if (!value) {
+    callback(new Error('请选择班级'))
+    return
+  }
+  callback()
+}
+
+const validateReviewerToken = (_rule, value, callback) => {
+  if (form.is_reviewer && !String(value || '').trim()) {
+    callback(new Error('申请审核员身份必须填写激活码'))
     return
   }
   callback()
@@ -148,8 +151,8 @@ const rules = {
     { min: 6, max: 64, message: '密码长度需在 6-64 位', trigger: 'blur' },
   ],
   confirmPassword: [{ validator: validateConfirmPassword, trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
   class_id: [{ validator: validateClassId, trigger: 'change' }],
+  reviewer_token: [{ validator: validateReviewerToken, trigger: 'blur' }],
   email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
   phone: [{ max: 20, message: '手机号长度不能超过20位', trigger: 'blur' }],
 }
@@ -168,9 +171,10 @@ const onSubmit = async () => {
       account: form.account.trim(),
       password: form.password,
       name: form.name.trim(),
-      role: form.role,
-      class_id: isStudentRole.value ? form.class_id : null,
-      is_reviewer: isStudentRole.value ? form.is_reviewer : false,
+      role: ROLES.STUDENT,
+      class_id: form.class_id,
+      is_reviewer: form.is_reviewer,
+      reviewer_token: form.is_reviewer ? form.reviewer_token.trim() : null,
       email: form.email.trim() || null,
       phone: form.phone.trim() || null,
     }
@@ -184,6 +188,8 @@ const onSubmit = async () => {
     submitting.value = false
   }
 }
+
+onMounted(loadClasses)
 </script>
 
 <style scoped>

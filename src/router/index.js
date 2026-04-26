@@ -47,6 +47,11 @@ const router = createRouter({
           component: () => import('@/views/announcement/AnnouncementPage.vue'),
         },
         {
+          path: 'announcement/:announcementId/report',
+          name: 'StudentAnnouncementReport',
+          component: () => import('@/views/announcement/AnnouncementReportPage.vue'),
+        },
+        {
           path: 'appeals',
           name: 'StudentAppeals',
           component: () => import('@/views/announcement/AppealCreatePage.vue'),
@@ -141,6 +146,11 @@ const router = createRouter({
           name: 'TeacherArchive',
           component: () => import('@/views/archive/ArchivePage.vue'),
         },
+        {
+          path: 'classes',
+          name: 'TeacherClasses',
+          component: () => import('@/views/system/ClassManagementPage.vue'),
+        },
         // ...else
       ],
     },
@@ -181,6 +191,11 @@ const router = createRouter({
           path: 'award-dicts',
           name: 'AwardDicts',
           component: () => import('@/views/system/AwardDictsPage.vue'),
+        },
+        {
+          path: 'classes',
+          name: 'AdminClasses',
+          component: () => import('@/views/system/ClassManagementPage.vue'),
         },
       ],
     },

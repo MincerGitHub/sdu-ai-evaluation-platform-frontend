@@ -47,23 +47,32 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import statisticService from '@/services/statisticService'
+import classService from '@/services/classService'
 import { CLASSMAP } from '@/utils/classMap'
 
 const loading = ref(false)
 const rows = ref([])
+const classRows = ref(CLASSMAP)
 const query = reactive({
   grade: '',
   class_id: '',
 })
 
-// 年级选项统一从 CLASSMAP 汇总
 const gradeOptions = computed(() => {
-  const set = new Set(CLASSMAP.map((item) => item.grade).filter(Boolean))
+  const set = new Set(classRows.value.map((item) => item.grade).filter(Boolean))
   return [...set].sort((a, b) => a - b)
 })
 
-// 班级选项直接使用 CLASSMAP
-const classOptions = computed(() => CLASSMAP)
+const classOptions = computed(() => classRows.value)
+
+const loadClasses = async () => {
+  try {
+    const rows = await classService.getClasses()
+    if (rows.length) classRows.value = rows
+  } catch {
+    classRows.value = CLASSMAP
+  }
+}
 
 const fetchStatistics = async () => {
   loading.value = true
@@ -88,7 +97,10 @@ const resetFilters = async () => {
   await fetchStatistics()
 }
 
-onMounted(fetchStatistics)
+onMounted(() => {
+  loadClasses()
+  fetchStatistics()
+})
 </script>
 
 <style scoped>

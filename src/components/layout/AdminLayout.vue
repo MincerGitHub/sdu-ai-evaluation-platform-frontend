@@ -39,6 +39,9 @@
           <el-menu-item index="/admin/award-dicts">
             奖项字典
           </el-menu-item>
+          <el-menu-item index="/admin/classes">
+            班级管理
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-main class="layout-main">

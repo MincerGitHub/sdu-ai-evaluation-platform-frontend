@@ -49,16 +49,29 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="申报ID">
-          <el-input-number
+        <el-form-item label="关联申报">
+          <el-select
             v-model="form.applicationId"
-            :min="1"
-            :precision="0"
-            :step="1"
-            controls-position="right"
-            placeholder="如申诉涉及某条申报，可填写"
+            filterable
+            remote
+            clearable
+            reserve-keyword
+            :remote-method="searchApplicationOptions"
+            :loading="applicationOptionLoading"
+            placeholder="可按姓名、学号或申报名称搜索当前公示范围内的申报"
             style="width: 100%"
-          />
+          >
+            <el-option
+              v-for="item in applicationOptions"
+              :key="item.application_id"
+              :label="formatApplicationOption(item)"
+              :value="item.application_id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="匿名申诉">
+          <el-switch v-model="form.isAnonymous" />
         </el-form-item>
 
         <el-form-item label="申诉内容" required>
@@ -109,8 +122,12 @@
           <span>{{ getStatusText(currentAppeal) }}</span>
         </div>
         <div class="detail-row" v-if="currentAppeal.application_id">
-          <span class="label">申报ID：</span>
+          <span class="label">关联申报：</span>
           <span>{{ currentAppeal.application_id }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">匿名：</span>
+          <span>{{ currentAppeal.is_anonymous ? '是' : '否' }}</span>
         </div>
         <div class="detail-row">
           <span class="label">内容：</span>
@@ -163,11 +180,14 @@ const detailVisible = ref(false)
 const currentAppeal = ref(null)
 
 const announcementOptions = ref([])
+const applicationOptions = ref([])
+const applicationOptionLoading = ref(false)
 const attachments = ref([])
 let announcementRefreshTimer = null
 const form = reactive({
   announcementId: null,
   applicationId: null,
+  isAnonymous: false,
   content: '',
 })
 
@@ -178,6 +198,15 @@ const syncModeFromRoute = () => {
 }
 
 watch(() => route.query.mode, syncModeFromRoute)
+
+watch(
+  () => form.announcementId,
+  () => {
+    form.applicationId = null
+    applicationOptions.value = []
+    searchApplicationOptions('')
+  }
+)
 
 const getStatusText = (row) => {
   if (!row) return '-'
@@ -227,12 +256,42 @@ const getAttachmentName = (item, index) => {
 const resetCreateForm = () => {
   form.content = ''
   form.applicationId = null
+  form.isAnonymous = false
   attachments.value = []
   if (announcementOptions.value.length) {
     form.announcementId = announcementOptions.value[0].id
   } else {
     form.announcementId = null
   }
+}
+
+const searchApplicationOptions = async (keyword = '') => {
+  if (!form.announcementId) {
+    applicationOptions.value = []
+    return
+  }
+  applicationOptionLoading.value = true
+  try {
+    const res = await appealService.searchApplicationOptions({
+      announcement_id: form.announcementId,
+      keyword: keyword || undefined,
+      limit: 30,
+    })
+    applicationOptions.value = Array.isArray(res?.data) ? res.data : []
+  } catch (error) {
+    applicationOptions.value = []
+    ElMessage.error(error?.message || '搜索申报失败')
+  } finally {
+    applicationOptionLoading.value = false
+  }
+}
+
+const formatApplicationOption = (item) => {
+  if (!item) return ''
+  const score = item.score == null ? '-' : item.score
+  const date = item.occurred_at ? ` / ${item.occurred_at}` : ''
+  const student = [item.student_name || `学生${item.student_id || ''}`, item.student_account].filter(Boolean).join(' ')
+  return `${student || '-'} / ${item.title || '-'} / ${score}分${date}`
 }
 
 const loadAnnouncements = async () => {
@@ -328,7 +387,7 @@ const beforeUpload = (file) => {
   const ext = String(file?.name || '').split('.').pop()?.toLowerCase() || ''
   const allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'docx']
   if (!allowedExt.includes(ext)) {
-    ElMessage.warning('浠呮敮鎸?pdf/jpg/jpeg/png/webp/docx')
+    ElMessage.warning('仅支持 pdf/jpg/jpeg/png/webp/docx')
     return false
   }
   const isWithinSize = file.size / 1024 / 1024 < 10
@@ -377,6 +436,7 @@ const submitAppeal = async () => {
     await appealService.create({
       announcement_id: form.announcementId,
       application_id: form.applicationId || null,
+      is_anonymous: form.isAnonymous,
       content: form.content,
       attachments: attachments.value.map((item) => ({ file_id: item.file_id })),
     })

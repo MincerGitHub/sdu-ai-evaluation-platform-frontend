@@ -11,6 +11,28 @@ const announcementService = {
     })
   },
 
+  /** 获取学生个人公示报告 */
+  getMyReport(announcementId) {
+    return http.get(`/announcements/${announcementId}/my-report`, {
+      params: { _ts: Date.now() },
+    })
+  },
+
+  async downloadAnnouncementFile(announcementId, filename) {
+    const blob = await http.get(`/announcements/${announcementId}/download`, {
+      responseType: 'blob',
+      params: { _ts: Date.now() },
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename || `announcement_${announcementId}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  },
+
   /** 发布公示 */
   createAnnouncement(payload) {
     return http.post('/announcements', payload)

@@ -226,6 +226,45 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="分班范围">
+          <div class="scope-editor">
+            <div v-for="(scope, index) in form.scopeRows" :key="scope.uid" class="scope-row">
+              <el-select
+                v-model="scope.archive_id"
+                filterable
+                clearable
+                placeholder="归档记录"
+                class="scope-archive"
+              >
+                <el-option
+                  v-for="item in archiveOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+              <el-select
+                v-model="scope.classIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                placeholder="班级"
+                class="scope-classes"
+              >
+                <el-option
+                  v-for="item in classOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+              <el-button link type="danger" @click="removeScopeRow(index)">删除</el-button>
+            </div>
+            <el-button class="btn-plain" @click="addScopeRow">添加范围</el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="开始时间" prop="startAt">
           <el-date-picker
             v-model="form.startAt"
@@ -262,10 +301,12 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import archiveService from '@/services/archiveService'
 import announcementService from '@/services/announcementService'
+import classService from '@/services/classService'
 import { CLASSMAP } from '@/utils/classMap'
 
 const archives = ref([])
 const announcements = ref([])
+const classRows = ref(CLASSMAP)
 const loadingArchives = ref(false)
 const loadingAnnouncements = ref(false)
 
@@ -280,6 +321,7 @@ const form = reactive({
   archive_id: '',
   grade: '',
   classIds: [],
+  scopeRows: [],
   startAt: null,
   endAt: null,
 })
@@ -351,7 +393,7 @@ const archiveOptions = computed(() =>
 
 const gradeOptions = computed(() => {
   const set = new Set()
-  CLASSMAP.forEach((item) => {
+  classRows.value.forEach((item) => {
     if (item?.grade) set.add(String(item.grade))
   })
   archives.value.forEach((item) => {
@@ -366,14 +408,14 @@ const gradeOptions = computed(() => {
 
 const classOptions = computed(() => {
   if (!form.grade) {
-    return CLASSMAP.map((item) => ({
+    return classRows.value.map((item) => ({
       label: item.label,
       value: String(item.class_id),
       grade: String(item.grade),
     }))
   }
 
-  return CLASSMAP
+  return classRows.value
     .filter((item) => String(item.grade) === String(form.grade))
     .map((item) => ({
       label: item.label,
@@ -489,6 +531,15 @@ const fetchAnnouncements = async () => {
   }
 }
 
+const fetchClasses = async () => {
+  try {
+    const rows = await classService.getClasses()
+    if (rows.length) classRows.value = rows
+  } catch {
+    classRows.value = CLASSMAP
+  }
+}
+
 const formatDateTime = (value) => {
   if (!value) return '-'
   const date = new Date(value)
@@ -592,9 +643,22 @@ const resetForm = () => {
   form.archive_id = ''
   form.grade = ''
   form.classIds = []
+  form.scopeRows = []
   form.startAt = null
   form.endAt = null
   editingId.value = null
+}
+
+const addScopeRow = () => {
+  form.scopeRows.push({
+    uid: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    archive_id: form.archive_id,
+    classIds: [],
+  })
+}
+
+const removeScopeRow = (index) => {
+  form.scopeRows.splice(index, 1)
 }
 
 const openCreateDialog = (archive) => {
@@ -618,11 +682,30 @@ const openEditDialog = (announcement) => {
   editingId.value = announcement.id || announcement.announcement_id || null
   form.title = announcement.title || ''
   form.archive_id = announcement.archive_id || ''
+  const scopes = Array.isArray(announcement.scopes) ? announcement.scopes : []
+  const firstScope = scopes[0] || null
   const scope = announcement.scope || {}
-  const grade = scope.grade ?? announcement.grade
+  const grade = scope.grade ?? firstScope?.grade ?? announcement.grade
   form.grade = grade ? String(grade) : ''
-  const classIds = scope.class_ids || announcement.class_ids
+  if (firstScope?.archive_id) form.archive_id = firstScope.archive_id
+  const classIds = scopes.length
+    ? scopes.filter((item) => String(item.archive_id) === String(form.archive_id)).map((item) => item.class_id).filter(Boolean)
+    : scope.class_ids || announcement.class_ids
   form.classIds = Array.isArray(classIds) ? classIds.map((id) => String(id)) : []
+  const extraScopes = scopes.filter((item) => String(item.archive_id) !== String(form.archive_id))
+  const grouped = new Map()
+  extraScopes.forEach((item) => {
+    const key = item.archive_id || ''
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        uid: `${key}_${grouped.size}`,
+        archive_id: key,
+        classIds: [],
+      })
+    }
+    if (item.class_id) grouped.get(key).classIds.push(String(item.class_id))
+  })
+  form.scopeRows = Array.from(grouped.values())
   form.startAt = announcement.start_at ? new Date(announcement.start_at) : null
   form.endAt = announcement.end_at ? new Date(announcement.end_at) : null
   dialogVisible.value = true
@@ -662,6 +745,21 @@ const buildPayload = () => {
     return null
   }
 
+  const scopes = [
+    {
+      archive_id: form.archive_id,
+      grade,
+      class_ids: classIds,
+    },
+    ...form.scopeRows
+      .map((row) => ({
+        archive_id: row.archive_id,
+        grade,
+        class_ids: normalizeClassIds(row.classIds),
+      }))
+      .filter((row) => row.archive_id),
+  ]
+
   return {
     title,
     archive_id: form.archive_id,
@@ -669,6 +767,7 @@ const buildPayload = () => {
       grade,
       ...(classIds.length ? { class_ids: classIds } : {}),
     },
+    scopes,
     start_at: startAt,
     end_at: endAt,
   }
@@ -813,6 +912,7 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('resize', updateWindowSize)
   }
+  fetchClasses()
   fetchArchives()
   fetchAnnouncements()
 })
@@ -825,4 +925,28 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.scope-editor {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scope-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.scope-archive,
+.scope-classes {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .scope-row {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

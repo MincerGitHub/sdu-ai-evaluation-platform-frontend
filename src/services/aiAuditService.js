@@ -9,6 +9,11 @@ const aiAuditService = {
     /** 获取 AI 审核日志列表 */
     getLogs(params = {}) {
         return http.get('/ai-audits/logs', { params })
+    },
+
+    /** 预留：图片真实性/P图/AI生成检测 */
+    checkImageAuthenticity(fileId) {
+        return http.post('/ai-audits/image-authenticity', { file_id: fileId })
     }
 }
 
