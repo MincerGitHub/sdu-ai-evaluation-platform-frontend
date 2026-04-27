@@ -19,6 +19,7 @@ const routeLoaders = {
   TeacherDashboard: () => import('@/views/dashboard/TeacherDashboard.vue'),
   TeacherStatistics: () => import('@/views/application/TeacherStatisticsPage.vue'),
   TeacherStudentStatistics: () => import('@/views/application/TeacherStudentStatisticsPage.vue'),
+  TeacherInsight: () => import('@/views/application/TeacherInsightPage.vue'),
   TeacherAllApplications: () => import('@/views/application/TeacherAllApplicationsPage.vue'),
   TeacherApplication: () => import('@/views/application/ReviewApplicationPage.vue'),
   TeacherProfile: () => import('@/views/auth/TeacherProfilePage.vue'),
@@ -46,6 +47,7 @@ const preloadGroups = {
     'TeacherDashboard',
     'TeacherStatistics',
     'TeacherStudentStatistics',
+    'TeacherInsight',
     'TeacherAllApplications',
     'TeacherApplication',
     'TeacherAnnouncement',
@@ -193,6 +195,11 @@ const router = createRouter({
           path: 'statistics/students',
           name: 'TeacherStudentStatistics',
           component: routeLoaders.TeacherStudentStatistics,
+        },
+        {
+          path: 'insights',
+          name: 'TeacherInsight',
+          component: routeLoaders.TeacherInsight,
         },
         {
           path: 'all-applications',

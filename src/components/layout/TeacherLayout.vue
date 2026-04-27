@@ -53,6 +53,7 @@
             <template #title>申报总览</template>
             <el-menu-item index="/teacher/statistics">申报统计（班级）</el-menu-item>
             <el-menu-item index="/teacher/statistics/students">申报统计（学生）</el-menu-item>
+            <el-menu-item index="/teacher/insights">综测画像</el-menu-item>
             <el-menu-item index="/teacher/all-applications">全部申报</el-menu-item>
           </el-sub-menu>
 

@@ -15,7 +15,17 @@ const announcementService = {
   getMyReport(announcementId) {
     return http.get(`/announcements/${announcementId}/my-report`, {
       params: { _ts: Date.now() },
+      timeout: 30000,
     })
+  },
+
+  /** 调用外部模型生成学生个人报告语录；失败时前端继续使用规则化文案 */
+  generateMyReportStoryCopy(announcementId) {
+    return http.post(
+      `/announcements/${announcementId}/my-report/story-copy`,
+      { _ts: Date.now() },
+      { timeout: 180000 }
+    )
   },
 
   async downloadAnnouncementFile(announcementId, filename) {

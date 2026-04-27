@@ -59,6 +59,13 @@ const teacherService = {
     getStatistics(params = {}) {
         return http.get('/teacher/statistics', { params })
     },
+
+    /** 教师端综测画像与风险预警 */
+    analyzeInsights(payload = {}) {
+        return http.post('/teacher/insights/analyze', payload, {
+            timeout: 180000,
+        })
+    },
 }
 
 export default teacherService
