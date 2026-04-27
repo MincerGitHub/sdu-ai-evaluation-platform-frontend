@@ -3,8 +3,15 @@
     <header class="page-header">
       <h2>{{ pageTitle }}</h2>
     </header>
+    <div v-if="isManageReviewPage" class="review-filter-bar">
+      <div class="filter-left">
+        <span class="filter-label">状态筛选</span>
+        <el-segmented v-model="statusFilter" :options="statusOptions" />
+      </div>
+    </div>
     <ReviewTable
       :pending-count="pendingCount"
+      :count-label="isManageReviewPage ? '记录' : '待审核'"
       @view="handleView"
       @approve="handleApprove"
       @reject="handleReject"
@@ -51,10 +58,23 @@ const TITLE_MAP = {
 
 const authStore = useAuthStore()
 const store = useReviewStore()
+const statusFilter = ref('')
+const isManageReviewPage = computed(() => {
+    return authStore.isTeacher || authStore.isAdmin || route.path.startsWith('/teacher') || route.path.startsWith('/admin')
+})
+const statusOptions = [
+    { label: '全部', value: '' },
+    { label: '待AI', value: 'pending_ai' },
+    { label: 'AI异常', value: 'ai_abnormal' },
+    { label: '待人工', value: 'pending_review' },
+    { label: '已通过', value: 'approved' },
+    { label: '已驳回', value: 'rejected' },
+    { label: '已归档', value: 'archived' },
+]
 
 const pageTitle = computed(() => {
     const base = TITLE_MAP[category.value]?.[subType.value] ?? '审核'
-    const roleLabel = authStore.isTeacher || authStore.isAdmin ? '（教师复核）' : '（审核员）'
+    const roleLabel = isManageReviewPage.value ? '（教师复核）' : '（审核员）'
     return base + roleLabel
 })
 
@@ -160,13 +180,33 @@ async function handleBatchReject(rows) {
 // ---------- 初始化与路由监听 ----------
 function initPage() {
     store.setCategory(category.value, subType.value)
+    store.setStatus(statusFilter.value)
     store.fetchPendingByCategory()
     store.fetchPendingCount()
 }
 
 onMounted(initPage)
-watch([category, subType], initPage)
+watch([category, subType, statusFilter], initPage)
 </script>
 
 <style scoped>
+.review-filter-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 10px 0 14px;
+}
+
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  color: #606266;
+  font-size: 14px;
+  white-space: nowrap;
+}
 </style>

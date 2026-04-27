@@ -27,6 +27,7 @@
       <template #header>最近审核历史（5条）</template>
       <el-table :data="historyRows" size="small" border stripe empty-text="暂无审核历史">
         <el-table-column prop="title" label="申报名称" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="student_name" label="学生姓名" width="140" show-overflow-tooltip />
         <el-table-column prop="result" label="结果" width="120" />
         <el-table-column label="时间" min-width="180">
           <template #default="{ row }">

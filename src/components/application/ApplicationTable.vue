@@ -35,8 +35,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="170" fixed="right" align="center">
+      <el-table-column label="操作" width="230" fixed="right" align="center">
         <template #default="{ row }">
+          <el-button size="small" type="primary" link @click="emit('view', row)">
+            查看
+          </el-button>
           <el-button
             size="small"
             type="primary"
@@ -68,7 +71,7 @@ const store = useApplicationStore()
 const applications = computed(() => store.applications)
 const loading = computed(() => store.loading)
 
-const emit = defineEmits(['edit'])
+const emit = defineEmits(['edit', 'view'])
 
 // 状态可编辑：仅待AI评价/待审核
 const editableStatuses = [

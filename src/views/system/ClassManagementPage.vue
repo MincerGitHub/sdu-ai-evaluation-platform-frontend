@@ -8,7 +8,7 @@
       <template #header>{{ editingClassId ? '修改班级' : '创建班级' }}</template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="88px">
         <el-row :gutter="12">
-          <el-col :xs="24" :sm="8">
+          <el-col v-if="editingClassId" :xs="24" :sm="8">
             <el-form-item label="班级编号" prop="class_id">
               <el-input-number
                 v-model="form.class_id"
@@ -18,6 +18,12 @@
                 controls-position="right"
                 class="full-width"
               />
+            </el-form-item>
+          </el-col>
+          <el-col v-else :xs="24" :sm="8">
+            <el-form-item label="班级编号">
+              <el-input :model-value="nextClassIdText" disabled />
+              <div class="form-tip">创建时自动分配最小可用编号，从 1 开始。</div>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="8">
@@ -75,7 +81,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import classService from '@/services/classService'
 
@@ -93,10 +99,16 @@ const form = reactive({
 })
 
 const rules = {
-  class_id: [{ required: true, message: '请输入班级编号', trigger: 'blur' }],
   grade: [{ required: true, message: '请输入年级', trigger: 'blur' }],
   name: [{ max: 64, message: '名称不能超过64个字符', trigger: 'blur' }],
 }
+
+const nextClassIdText = computed(() => {
+  const used = new Set(rows.value.map((item) => Number(item.class_id)).filter((value) => Number.isInteger(value) && value > 0))
+  let next = 1
+  while (used.has(next)) next += 1
+  return `系统将分配：${next}`
+})
 
 const loadClasses = async () => {
   loading.value = true
@@ -141,7 +153,6 @@ const saveClass = async () => {
   saving.value = true
   try {
     const payload = {
-      class_id: form.class_id,
       grade: form.grade,
       name: form.name || null,
       is_active: form.is_active,
@@ -154,7 +165,10 @@ const saveClass = async () => {
       })
       ElMessage.success('班级已更新')
     } else {
-      await classService.createClass(payload)
+      await classService.createClass({
+        ...payload,
+        class_id: null,
+      })
       ElMessage.success('班级已创建')
     }
     resetForm()
@@ -196,5 +210,12 @@ onMounted(loadClasses)
 
 .full-width {
   width: 100%;
+}
+
+.form-tip {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

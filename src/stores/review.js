@@ -14,10 +14,12 @@ export const useReviewStore = defineStore('review', () => {
   const currentCategory = ref('')
   const currentSubType = ref('')
   const currentClassId = ref(null)
+  const currentStatus = ref('')
 
   function buildBaseParams(extra = {}, { includeCategory = false } = {}) {
     const params = { ...extra }
     if (currentClassId.value) params.class_id = currentClassId.value
+    if (currentStatus.value) params.status = currentStatus.value
     if (includeCategory) {
       if (currentCategory.value) params.category = currentCategory.value
       if (currentSubType.value) params.sub_type = currentSubType.value
@@ -32,6 +34,10 @@ export const useReviewStore = defineStore('review', () => {
 
   function setClassId(classId) {
     currentClassId.value = classId || null
+  }
+
+  function setStatus(status) {
+    currentStatus.value = status || ''
   }
 
   async function fetchPendingByCategory() {
@@ -151,8 +157,10 @@ export const useReviewStore = defineStore('review', () => {
     currentCategory,
     currentSubType,
     currentClassId,
+    currentStatus,
     setCategory,
     setClassId,
+    setStatus,
     fetchPendingByCategory,
     fetchCategorySummary,
     fetchPendingCount,

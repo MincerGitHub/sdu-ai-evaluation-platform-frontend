@@ -49,18 +49,30 @@ const SCORE_CATEGORY_META = {
   physical_mental: {
     label: '身心素养',
     maxScore: 15,
+    basicMaxScore: 9,
+    achievementMaxScore: 6,
+    achievementLabel: '成果',
   },
   art: {
     label: '文艺素养',
     maxScore: 15,
+    basicMaxScore: 9,
+    achievementMaxScore: 6,
+    achievementLabel: '成果',
   },
   labor: {
     label: '劳动素养',
     maxScore: 25,
+    basicMaxScore: 15,
+    achievementMaxScore: 10,
+    achievementLabel: '成果',
   },
   innovation: {
     label: '创新素养',
     maxScore: 45,
+    basicMaxScore: 5,
+    achievementMaxScore: 40,
+    achievementLabel: '突破',
   },
 }
 

@@ -6,14 +6,14 @@
       </div>
       <div class="header-right">
         <el-menu mode="horizontal" class="header-menu" :ellipsis="false" router>
-          <el-menu-item v-if="canUseReviewerView" index="toggle-view" @click="toggleViewMode">
+          <el-menu-item v-if="canUseReviewerView" :index="viewSwitchTarget" @click="toggleViewMode">
             {{ isInReviewerView ? '切换到学生视图' : '切换到审核人视图' }}
           </el-menu-item>
-          <el-menu-item index="/student/appeals">
-            我的申诉
+          <el-menu-item index="/reviewer/dashboard">
+            审核首页
           </el-menu-item>
-          <el-menu-item index="/student/announcement">
-            公示
+          <el-menu-item index="/reviewer/application/physical_mental/basic">
+            待审核
           </el-menu-item>
           <el-sub-menu index="user-menu">
             <template #title>
@@ -102,6 +102,7 @@ const activeMenu = computed(() => route.path)
 
 const canUseReviewerView = computed(() => authStore.canUseReviewerView)
 const isInReviewerView = computed(() => authStore.isInReviewerView)
+const viewSwitchTarget = computed(() => (isInReviewerView.value ? '/student/dashboard' : '/reviewer/dashboard'))
 
 const toggleViewMode = async () => {
   if (!canUseReviewerView.value) return

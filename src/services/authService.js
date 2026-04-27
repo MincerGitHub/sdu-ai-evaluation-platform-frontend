@@ -29,6 +29,9 @@ const authService = {
 
     updateUserInfo(userInfo) {
         const payload = { ...userInfo }
+        if (Object.prototype.hasOwnProperty.call(payload, 'name')) {
+            payload.name = normalizeOptionalText(payload.name)
+        }
         if (Object.prototype.hasOwnProperty.call(payload, 'email')) {
             payload.email = normalizeOptionalText(payload.email)
         }

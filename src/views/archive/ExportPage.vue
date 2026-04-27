@@ -40,6 +40,45 @@
       </el-form-item>
     </el-form>
 
+    <section class="export-preview">
+      <div class="preview-header">
+        <div>
+          <h3>导出预览</h3>
+          <span class="preview-meta">
+            共 {{ previewSummary.studentCount }} 名学生，官方总分合计 {{ formatScore(previewSummary.totalScore) }}
+          </span>
+        </div>
+        <el-button class="btn-plain" :disabled="!form.grade" :loading="previewLoading" @click="fetchPreview">
+          刷新预览
+        </el-button>
+      </div>
+      <el-table
+        :data="previewRows"
+        border
+        stripe
+        size="small"
+        v-loading="previewLoading"
+        :empty-text="previewEmptyText"
+      >
+        <el-table-column prop="class_id" label="班级" width="100" />
+        <el-table-column prop="student_account" label="学号" width="150" />
+        <el-table-column prop="student_name" label="姓名" width="130" show-overflow-tooltip />
+        <el-table-column prop="total_count" label="申报数" width="100" align="center" />
+        <el-table-column label="官方总分" width="120" align="center">
+          <template #default="{ row }">{{ formatScore(row.actual_score ?? row.total_score) }}</template>
+        </el-table-column>
+        <el-table-column label="原始总分" width="120" align="center">
+          <template #default="{ row }">{{ formatScore(row.raw_total_score) }}</template>
+        </el-table-column>
+        <el-table-column label="成果额外分" width="120" align="center">
+          <template #default="{ row }">{{ formatScore(row.overflow_score) }}</template>
+        </el-table-column>
+        <el-table-column label="平均分" width="120" align="center">
+          <template #default="{ row }">{{ formatScore(row.average_score) }}</template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <el-form-item>
       <el-button class="btn-main" :loading="submitting" @click="handleSubmit">提交</el-button>
       <el-button class="btn-plain" @click="handleBack">返回</el-button>
@@ -54,10 +93,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import teacherService from '@/services/teacherService'
+import statisticService from '@/services/statisticService'
 import classService from '@/services/classService'
 import { CLASSMAP } from '@/utils/classMap'
 
@@ -71,6 +111,9 @@ const taskError = ref('')
 const downloadUrl = ref('')
 const downloadFileName = ref('')
 const classRows = ref(CLASSMAP)
+const previewRows = ref([])
+const previewLoading = ref(false)
+const previewLoaded = ref(false)
 
 const gradeOptions = computed(() => {
   const set = new Map()
@@ -90,6 +133,21 @@ const classOptions = computed(() => {
   return classRows.value.filter((item) => Number(item.grade) === Number(form.grade))
 })
 
+const previewSummary = computed(() => {
+  const totalScore = previewRows.value.reduce((sum, row) => sum + Number(row.actual_score ?? row.total_score ?? 0), 0)
+  return {
+    studentCount: previewRows.value.length,
+    totalScore,
+  }
+})
+
+const previewEmptyText = computed(() => {
+  if (!form.grade) return '请选择年级后预览导出数据'
+  if (previewLoading.value) return '正在加载预览数据'
+  if (previewLoaded.value) return '当前年级暂无可导出的学生统计'
+  return '请选择年级后预览导出数据'
+})
+
 const loadClasses = async () => {
   try {
     const rows = await classService.getClasses()
@@ -97,6 +155,47 @@ const loadClasses = async () => {
   } catch {
     classRows.value = CLASSMAP
   }
+}
+
+const fetchPreview = async () => {
+  if (!form.grade) {
+    previewRows.value = []
+    previewLoaded.value = false
+    return
+  }
+  previewLoading.value = true
+  try {
+    const params = { grade: Number(form.grade) }
+    if (form.classId) params.class_id = Number(form.classId)
+    const res = await statisticService.getStudentStatistics(params)
+    const payload = res?.data
+    previewRows.value = Array.isArray(payload?.list) ? payload.list : Array.isArray(payload) ? payload : []
+    previewLoaded.value = true
+  } catch (error) {
+    previewRows.value = []
+    previewLoaded.value = true
+    ElMessage.error(error?.message || '获取导出预览失败')
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+let previewTimer = 0
+
+const schedulePreviewFetch = () => {
+  if (previewTimer) window.clearTimeout(previewTimer)
+  previewTimer = window.setTimeout(() => {
+    previewTimer = 0
+    fetchPreview()
+  }, 80)
+}
+
+const handleGradeChange = () => {
+  if (form.classId && !classOptions.value.some((item) => Number(item.class_id) === Number(form.classId))) {
+    form.classId = null
+  }
+  previewLoaded.value = false
+  schedulePreviewFetch()
 }
 
 const form = reactive({
@@ -204,7 +303,30 @@ const openDownload = () => {
   })
 }
 
-onMounted(loadClasses)
+const formatScore = (value) => {
+  const number = Number(value || 0)
+  return Number.isInteger(number) ? String(number) : number.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
+}
+
+onMounted(async () => {
+  await loadClasses()
+  await fetchPreview()
+})
+
+watch(
+  () => form.grade,
+  () => {
+    handleGradeChange()
+  }
+)
+
+watch(
+  () => form.classId,
+  () => {
+    previewLoaded.value = false
+    schedulePreviewFetch()
+  }
+)
 </script>
 
 <style scoped>
@@ -218,6 +340,30 @@ onMounted(loadClasses)
   margin-top: 8px;
   color: #606266;
   font-size: 14px;
+}
+
+.export-preview {
+  margin: 18px 0;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.preview-header h3 {
+  margin: 0 0 4px;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.preview-meta {
+  color: #606266;
+  font-size: 13px;
 }
 
 .task-error {

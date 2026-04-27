@@ -68,7 +68,7 @@
         >
           <el-button type="primary" plain>选择文件</el-button>
           <template #tip>
-            <div class="el-upload__tip">支持 pdf/jpg/jpeg/png/webp/docx，单文件不超过 10MB</div>
+            <div class="el-upload__tip">支持 pdf/jpg/jpeg/png/webp/docx，单文件不超过 25MB</div>
           </template>
         </el-upload>
       </el-form-item>
@@ -124,6 +124,7 @@ const fileList = ref([])
 const selectedUid = ref(null)
 const currentScoreInfo = ref(null)
 const SUPPORTED_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png', 'webp', 'docx'])
+const MAX_UPLOAD_SIZE_MB = 25
 
 const defaultForm = () => ({
   title: '',
@@ -232,6 +233,11 @@ function handleFileChange(file) {
   const ext = String(file?.name || '').split('.').pop()?.toLowerCase() || ''
   if (!SUPPORTED_EXTENSIONS.has(ext)) {
     ElMessage.warning('仅支持 pdf/jpg/jpeg/png/webp/docx')
+    fileList.value = fileList.value.filter((f) => (f.uid || f.file_id) !== (file.uid || file.file_id))
+    return
+  }
+  if ((file.size || 0) > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+    ElMessage.warning(`文件大小不能超过 ${MAX_UPLOAD_SIZE_MB}MB`)
     fileList.value = fileList.value.filter((f) => (f.uid || f.file_id) !== (file.uid || file.file_id))
     return
   }

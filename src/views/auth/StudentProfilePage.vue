@@ -6,7 +6,7 @@
 
     <el-form :model="profileForm" label-width="90px" class="profile-form">
       <el-form-item label="姓名">
-        <el-input v-model="profileForm.name" disabled />
+        <el-input v-model.trim="profileForm.name" maxlength="64" show-word-limit placeholder="请输入姓名" />
       </el-form-item>
       <el-form-item label="学号">
         <el-input v-model="profileForm.account" disabled />
@@ -140,9 +140,14 @@ const fetchTokens = async () => {
 }
 
 const handleSaveProfile = async () => {
+  if (!profileForm.name.trim()) {
+    ElMessage.warning('请输入姓名')
+    return
+  }
   savingProfile.value = true
   try {
     const latestUser = await authStore.updateProfile({
+      name: profileForm.name,
       email: profileForm.email,
       phone: profileForm.phone,
     })

@@ -20,6 +20,11 @@ const appealService = {
     process(appealId, payload) {
         return http.post(`/appeals/${appealId}/process`, payload)
     },
+
+    /** 删除未处理申诉 */
+    deleteAppeal(appealId) {
+        return http.delete(`/appeals/${appealId}`)
+    },
 }
 
 export default appealService

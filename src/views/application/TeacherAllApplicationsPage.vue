@@ -59,6 +59,7 @@
         <el-table-column prop="class_id" label="班级" width="100" />
         <el-table-column prop="student_account" label="学号" width="140" />
         <el-table-column prop="title" label="申报名称" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="student_name" label="学生姓名" width="140" show-overflow-tooltip />
         <el-table-column label="评审规则" min-width="360" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="rule-reference" :title="reviewRule(row)">
@@ -78,7 +79,6 @@
             <el-button
               link
               type="primary"
-              :disabled="row.status === 'archived'"
               @click="openReviewDetail(row)"
             >
               审核申报

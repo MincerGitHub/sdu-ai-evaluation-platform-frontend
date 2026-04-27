@@ -48,7 +48,7 @@
             <el-tag :type="getStatusTagType(row)" size="small">{{ getStatusText(row) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160">
+        <el-table-column label="操作" width="210">
           <template #default="{ row }">
             <el-button
               v-if="row.status !== 'processed'"
@@ -59,6 +59,14 @@
               处理申诉
             </el-button>
             <el-button v-else link type="info" @click="openProcess(row)">查看结果</el-button>
+            <el-button
+              link
+              type="danger"
+              :disabled="row.status !== 'pending'"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -199,7 +207,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAppealStore } from '@/stores/appeal'
 import appealService from '@/services/appealService'
 import fileService from '@/services/fileService'
@@ -354,10 +362,31 @@ const handleSearch = () => {
 }
 
 const refreshList = () => {
-  store.fetchAppeals({
+  return store.fetchAppeals({
     status: statusFilter.value || '',
     student_name: studentNameFilter.value || '',
   })
+}
+
+const handleDelete = async (row) => {
+  if (!row?.id) return
+  if (row.status !== 'pending') {
+    ElMessage.info('已处理申诉需要保留处理记录，不能删除')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认删除这条未处理申诉？此操作不可恢复。', '删除申诉', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await appealService.deleteAppeal(row.id)
+    ElMessage.success('申诉已删除')
+    await refreshList()
+  } catch (error) {
+    if (error === 'cancel' || error === 'close') return
+    ElMessage.error(error?.message || '删除申诉失败')
+  }
 }
 
 const searchApplicationOptions = async (keyword = '') => {

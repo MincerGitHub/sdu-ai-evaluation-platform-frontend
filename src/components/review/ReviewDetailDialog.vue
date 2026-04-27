@@ -195,8 +195,8 @@
         <div class="dialog-footer-actions">
           <el-button text @click="visible = false">返回</el-button>
           <template v-if="showDecisionActions">
-            <el-button type="success" :loading="submitting" @click="handleDecision('approved')">通过</el-button>
-            <el-button type="danger" plain :loading="submitting" @click="handleDecision('rejected')">驳回</el-button>
+            <el-button type="success" :loading="submitting" :disabled="!canApproveCurrent" @click="handleDecision('approved')">通过</el-button>
+            <el-button type="danger" plain :loading="submitting" :disabled="!canRejectCurrent" @click="handleDecision('rejected')">驳回</el-button>
           </template>
         </div>
       </div>
@@ -256,8 +256,17 @@ const aiError = ref('')
 const aiReport = ref(null)
 let mammothModulePromise = null
 
-const dialogTitle = computed(() => (detail.value ? `审核详情 #${detail.value.application_id || detail.value.id}` : '审核详情'))
+const dialogTitle = computed(() => {
+  const base = props.showDecisionActions ? '审核详情' : '申报详情'
+  return detail.value ? `${base} #${detail.value.application_id || detail.value.id}` : base
+})
 const showDecisionActions = computed(() => props.showDecisionActions)
+const canApproveCurrent = computed(() => {
+  return ['pending_review', 'ai_abnormal', 'approved', 'rejected'].includes(detail.value?.status)
+})
+const canRejectCurrent = computed(() => {
+  return ['pending_review', 'ai_abnormal', 'approved', 'rejected', 'archived'].includes(detail.value?.status)
+})
 
 const currentAttachment = computed(() =>
   attachments.value.find((item) => item.file_id === selectedAttachmentId.value) || null
@@ -542,6 +551,14 @@ async function open(applicationId, contextRow = null) {
 
 async function handleDecision(decision) {
   if (!detail.value?.application_id) return
+  if (decision === 'approved' && !canApproveCurrent.value) {
+    ElMessage.info('当前状态不能重复通过')
+    return
+  }
+  if (decision === 'rejected' && !canRejectCurrent.value) {
+    ElMessage.info('当前状态不能驳回')
+    return
+  }
 
   const payload = {
     decision,

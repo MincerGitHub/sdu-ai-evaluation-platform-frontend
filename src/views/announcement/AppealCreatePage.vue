@@ -26,7 +26,7 @@
         <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">查看</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link type="danger" :disabled="row.status !== 'pending'" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -94,7 +94,7 @@
           >
             <el-button>+ 上传文件</el-button>
           </el-upload>
-          <div class="upload-tip">支持图片/PDF，单个文件不超过 10MB</div>
+          <div class="upload-tip">支持图片/PDF，单个文件不超过 25MB</div>
 
           <div v-if="attachments.length" class="attachment-list">
             <div v-for="item in attachments" :key="item.file_id" class="attachment-item">
@@ -160,7 +160,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import appealService from '@/services/appealService'
 import announcementService from '@/services/announcementService'
 import fileService from '@/services/fileService'
@@ -184,6 +184,7 @@ const applicationOptions = ref([])
 const applicationOptionLoading = ref(false)
 const attachments = ref([])
 let announcementRefreshTimer = null
+const MAX_UPLOAD_SIZE_MB = 25
 const form = reactive({
   announcementId: null,
   applicationId: null,
@@ -390,9 +391,9 @@ const beforeUpload = (file) => {
     ElMessage.warning('仅支持 pdf/jpg/jpeg/png/webp/docx')
     return false
   }
-  const isWithinSize = file.size / 1024 / 1024 < 10
+  const isWithinSize = file.size / 1024 / 1024 <= MAX_UPLOAD_SIZE_MB
   if (!isWithinSize) {
-    ElMessage.warning('文件大小不能超过 10MB')
+    ElMessage.warning(`文件大小不能超过 ${MAX_UPLOAD_SIZE_MB}MB`)
     return false
   }
   return true
@@ -455,8 +456,25 @@ const openDetail = (row) => {
   detailVisible.value = true
 }
 
-const handleDelete = () => {
-  ElMessage.info('当前版本暂不支持删除申诉')
+const handleDelete = async (row) => {
+  if (!row?.id) return
+  if (row.status !== 'pending') {
+    ElMessage.info('已处理申诉需要保留处理记录，不能删除')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认删除这条申诉？此操作不可恢复。', '删除申诉', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await appealService.deleteAppeal(row.id)
+    ElMessage.success('申诉已删除')
+    await loadAppeals()
+  } catch (error) {
+    if (error === 'cancel' || error === 'close') return
+    ElMessage.error(error?.message || '删除申诉失败')
+  }
 }
 
 onMounted(async () => {

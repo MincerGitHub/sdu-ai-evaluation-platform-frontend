@@ -84,8 +84,13 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import * as echarts from 'echarts'
+import { RadarChart } from 'echarts/charts'
+import { LegendComponent, TooltipComponent } from 'echarts/components'
+import { init, use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import announcementService from '@/services/announcementService'
+
+use([RadarChart, LegendComponent, TooltipComponent, CanvasRenderer])
 
 const route = useRoute()
 const router = useRouter()
@@ -133,7 +138,7 @@ const fetchReport = async () => {
 const renderChart = () => {
   if (!chartRef.value || !report.value) return
   if (!chart) {
-    chart = echarts.init(chartRef.value)
+    chart = init(chartRef.value)
   }
   const indicators = radarIndicators.value.map((item) => ({
     name: item.name,

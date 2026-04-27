@@ -174,12 +174,15 @@ export const useAuthStore = defineStore('auth', () => {
             return text || null
         }
 
+        const nextName = normalizeOptionalText(profilePayload?.name)
         const nextEmail = normalizeOptionalText(profilePayload?.email)
         const nextPhone = normalizeOptionalText(profilePayload?.phone)
+        const currentName = normalizeOptionalText(user.value?.name)
         const currentEmail = normalizeOptionalText(user.value?.email)
         const currentPhone = normalizeOptionalText(user.value?.phone)
 
         const payload = {}
+        if (nextName !== currentName) payload.name = nextName
         if (nextEmail !== currentEmail) payload.email = nextEmail
         if (nextPhone !== currentPhone) payload.phone = nextPhone
 

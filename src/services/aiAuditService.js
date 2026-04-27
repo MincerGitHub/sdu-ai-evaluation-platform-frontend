@@ -12,8 +12,8 @@ const aiAuditService = {
     },
 
     /** 预留：图片真实性/P图/AI生成检测 */
-    checkImageAuthenticity(fileId) {
-        return http.post('/ai-audits/image-authenticity', { file_id: fileId })
+    checkImageAuthenticity(fileId, options = {}) {
+        return http.post('/ai-audits/image-authenticity', { file_id: fileId, ...options })
     }
 }
 

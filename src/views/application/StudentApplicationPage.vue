@@ -4,7 +4,7 @@
       <h2>{{ pageTitle }}</h2>
     </header>
 
-    <ApplicationTable @edit="openEdit">
+    <ApplicationTable @edit="openEdit" @view="openView">
       <template #toolbar-right>
         <el-button class="btn-main" @click="openCreate">新建申报</el-button>
       </template>
@@ -27,6 +27,11 @@
       :sub-type="subType"
       @success="refresh"
     />
+    <ReviewDetailDialog
+      ref="viewDialogRef"
+      :show-decision-actions="false"
+      :on-fetch-detail="fetchStudentDetail"
+    />
   </div>
 </template>
 
@@ -34,9 +39,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useApplicationStore } from '@/stores/application'
+import { useAuthStore } from '@/stores/auth'
 import { getCascaderOptions } from '@/utils/dealAwardUid'
+import applicationService from '@/services/applicationService'
 import ApplicationTable from '@/components/application/ApplicationTable.vue'
 import ApplicationFormDialog from '@/components/application/ApplicationFormDialog.vue'
+import ReviewDetailDialog from '@/components/review/ReviewDetailDialog.vue'
 
 // ---------- 路由参数 ----------
 const route = useRoute()
@@ -68,6 +76,7 @@ const pageTitle = computed(
 
 // ---------- Store ----------
 const store = useApplicationStore()
+const authStore = useAuthStore()
 
 // ---------- 级联选项 ----------
 const cascaderOptions = computed(() => getCascaderOptions(category.value, subType.value))
@@ -75,6 +84,7 @@ const cascaderOptions = computed(() => getCascaderOptions(category.value, subTyp
 // ---------- 弹窗控制 ----------
 const createDialogRef = ref(null)
 const editDialogRef = ref(null)
+const viewDialogRef = ref(null)
 const editingRow = ref(null)
 
 function openCreate() {
@@ -84,6 +94,36 @@ function openCreate() {
 function openEdit(row) {
     editingRow.value = row
     setTimeout(() => editDialogRef.value?.open(), 0)
+}
+
+function openView(row) {
+    if (!row?.application_id) return
+    viewDialogRef.value?.open(row.application_id, {
+        ...row,
+        student_id: authStore.user?.id,
+        student_name: authStore.user?.name,
+        student_account: authStore.user?.account,
+        class_id: authStore.user?.class_id,
+        student_email: authStore.user?.email,
+    })
+}
+
+async function fetchStudentDetail(applicationId) {
+    const res = await applicationService.getDetail(applicationId)
+    const detail = res?.data || {}
+    return {
+        success: true,
+        data: {
+            ...detail,
+            student: detail.student || {
+                id: authStore.user?.id || null,
+                name: authStore.user?.name || '',
+                account: authStore.user?.account || '',
+                class_id: authStore.user?.class_id || null,
+                email: authStore.user?.email || '',
+            },
+        },
+    }
 }
 
 // ---------- 刷新 ----------
