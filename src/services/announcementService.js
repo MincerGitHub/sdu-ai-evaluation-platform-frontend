@@ -15,7 +15,24 @@ const announcementService = {
   getMyReport(announcementId) {
     return http.get(`/announcements/${announcementId}/my-report`, {
       params: { _ts: Date.now() },
-      timeout: 30000,
+      timeout: 180000,
+    })
+  },
+
+  /** 获取某个公示范围内的公开申报 */
+  getAnnouncementApplications(announcementId, params = {}) {
+    return http.get(`/announcements/${announcementId}/applications`, {
+      params: {
+        ...params,
+        _ts: Date.now(),
+      },
+    })
+  },
+
+  /** 获取某个公示范围内的单条申报详情 */
+  getAnnouncementApplicationDetail(announcementId, applicationId) {
+    return http.get(`/announcements/${announcementId}/applications/${applicationId}`, {
+      params: { _ts: Date.now() },
     })
   },
 

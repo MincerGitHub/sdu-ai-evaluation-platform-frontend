@@ -13,6 +13,9 @@
           <button type="button" class="download-link" @click="downloadAnnouncement(item)">
             {{ item.label }}
           </button>
+          <button v-if="isStudent" type="button" class="report-link" @click="openApplications(item)">
+            查看公示申报
+          </button>
           <button v-if="isStudent" type="button" class="report-link" @click="openReport(item)">
             查看个人报告
           </button>
@@ -71,6 +74,14 @@ const openReport = (item) => {
     return
   }
   router.push({ name: 'StudentAnnouncementReport', params: { announcementId: item.id } })
+}
+
+const openApplications = (item) => {
+  if (!item?.id) {
+    ElMessage.warning('该公示暂不可查看申报')
+    return
+  }
+  router.push({ name: 'StudentAnnouncementApplications', params: { announcementId: item.id } })
 }
 
 const fetchAnnouncements = async () => {

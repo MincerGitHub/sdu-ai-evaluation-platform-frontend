@@ -7,6 +7,12 @@ function resolveApiPath(url) {
     return `/api/v1/${url.replace(/^\/+/, '')}`
 }
 
+function resolveHttpPath(url) {
+    const apiPath = resolveApiPath(url)
+    if (/^https?:\/\//i.test(apiPath)) return apiPath
+    return apiPath.replace(/^\/api\/v1(?=\/)/, '')
+}
+
 const fileService = {
     /** 上传文件（multipart/form-data） */
     upload(file) {
@@ -45,19 +51,43 @@ const fileService = {
         })
     },
 
+    /** 通过后端返回的授权 URL 获取文件二进制 */
+    getFileBlobByUrl(url) {
+        return http.get(resolveHttpPath(url), {
+            params: { raw: true },
+            responseType: 'blob',
+        })
+    },
+
     /** 获取文件 ArrayBuffer（带鉴权） */
     async getFileArrayBuffer(fileId) {
         const blob = await this.getFileBlob(fileId)
         return blob.arrayBuffer()
     },
 
+    /** 通过授权 URL 获取文件 ArrayBuffer */
+    async getFileArrayBufferByUrl(url) {
+        const blob = await this.getFileBlobByUrl(url)
+        return blob.arrayBuffer()
+    },
+
     /** 鉴权下载文件并触发浏览器保存 */
     async downloadFile(fileId, filename) {
         const blob = await this.getFileBlob(fileId)
+        this.saveBlob(blob, filename || fileId)
+    },
+
+    /** 通过授权 URL 下载文件 */
+    async downloadFileByUrl(url, filename) {
+        const blob = await this.getFileBlobByUrl(url)
+        this.saveBlob(blob, filename || 'attachment')
+    },
+
+    saveBlob(blob, filename) {
         const blobUrl = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = blobUrl
-        link.download = filename || fileId
+        link.download = filename
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

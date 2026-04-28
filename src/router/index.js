@@ -11,6 +11,7 @@ const routeLoaders = {
   StudentProfile: () => import('@/views/auth/StudentProfilePage.vue'),
   StudentAnnouncement: () => import('@/views/announcement/AnnouncementPage.vue'),
   StudentAnnouncementReport: () => import('@/views/announcement/AnnouncementReportPage.vue'),
+  StudentAnnouncementApplications: () => import('@/views/announcement/AnnouncementApplicationsPage.vue'),
   StudentAppeals: () => import('@/views/announcement/AppealCreatePage.vue'),
   ReviewerLayout: () => import('@/components/layout/ReviewerLayout.vue'),
   ReviewerDashboard: () => import('@/views/dashboard/ReviewerDashboard.vue'),
@@ -58,7 +59,15 @@ const preloadGroups = {
     'TokenManagement',
     'TeacherProfile',
   ],
-  student: ['StudentDashboard', 'StudentApplication', 'StudentAnnouncement', 'StudentAnnouncementReport', 'StudentAppeals', 'StudentProfile'],
+  student: [
+    'StudentDashboard',
+    'StudentApplication',
+    'StudentAnnouncement',
+    'StudentAnnouncementApplications',
+    'StudentAnnouncementReport',
+    'StudentAppeals',
+    'StudentProfile',
+  ],
   reviewer: ['ReviewerDashboard', 'ReviewerApplication'],
 }
 
@@ -136,6 +145,11 @@ const router = createRouter({
           path: 'announcement/:announcementId/report',
           name: 'StudentAnnouncementReport',
           component: routeLoaders.StudentAnnouncementReport,
+        },
+        {
+          path: 'announcement/:announcementId/applications',
+          name: 'StudentAnnouncementApplications',
+          component: routeLoaders.StudentAnnouncementApplications,
         },
         {
           path: 'appeals',

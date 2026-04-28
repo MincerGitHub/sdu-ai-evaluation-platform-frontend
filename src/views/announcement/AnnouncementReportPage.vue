@@ -183,17 +183,23 @@
             <span class="section-kicker">Semester Stories</span>
             <h2>把学期小故事化成漂浮星球</h2>
           </div>
-          <div class="story-cosmos">
+          <div ref="storyCosmosRef" class="story-cosmos">
             <div class="story-nebula" aria-hidden="true" />
             <svg class="story-orbit-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               <path d="M11 54 C24 18 50 15 69 31 S91 74 55 83 S18 84 11 54" />
               <path d="M18 25 C43 9 78 18 86 46 S66 90 35 80 S-2 45 18 25" />
             </svg>
             <article
-              v-for="planet in storyPlanets"
+              v-for="planet in activeStoryPlanets"
               :key="planet.key"
               class="story-orb"
+              :class="[planet.variant, { holding: heldStoryPlanetKey === planet.key }]"
               :style="storyPlanetStyle(planet)"
+              tabindex="0"
+              @mouseenter="holdStoryPlanet(planet.key)"
+              @mouseleave="releaseStoryPlanet(planet.key)"
+              @focus="holdStoryPlanet(planet.key)"
+              @blur="releaseStoryPlanet(planet.key)"
             >
               <div class="story-orb-glow" aria-hidden="true" />
               <div class="story-orb-ring" aria-hidden="true">
@@ -243,12 +249,27 @@
         </section>
 
         <section class="report-section letter-section" data-report-section="letter">
+          <div class="letter-cosmic-field" aria-hidden="true">
+            <i class="cosmic-shape shape-rocket" />
+            <i class="cosmic-shape shape-black-hole" />
+            <i class="cosmic-shape shape-white-hole" />
+            <i class="cosmic-shape shape-comet" />
+          </div>
           <div class="letter-paper">
             <span class="section-kicker">Growth Letter</span>
             <h2>{{ report.evaluation?.title || '综合评价' }}</h2>
             <p>
               {{ evaluationText || report.evaluation?.placeholder || '综合评价正在随星图一起整理，稍后会写下一段专属鼓励。' }}
             </p>
+            <div class="letter-signal-grid">
+              <article v-for="signal in letterSignals" :key="signal.key" :class="`signal-${signal.type}`">
+                <i aria-hidden="true" />
+                <span>{{ signal.label }}</span>
+                <strong>{{ signal.title }}</strong>
+                <em>{{ signal.value }}</em>
+                <small>{{ signal.description }}</small>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -283,6 +304,7 @@ const route = useRoute()
 const router = useRouter()
 const pageRef = ref(null)
 const chartRef = ref(null)
+const storyCosmosRef = ref(null)
 const report = ref(null)
 const storyCopy = ref(null)
 const reportStarted = ref(false)
@@ -290,10 +312,14 @@ const preparing = ref(false)
 const activeSection = ref('cover')
 const selectedStar = ref(null)
 const animatedTotal = ref(0)
+const storyBodies = ref([])
+const heldStoryPlanetKey = ref(null)
 let chart = null
 let observer = null
 let animationFrame = 0
 let preparingTimer = 0
+let storyAnimationFrame = 0
+let storyLastTick = 0
 
 const preparingMessages = [
   {
@@ -350,7 +376,7 @@ const starItems = computed(() => {
     const categoryIndex = categoryOrder[item.category] ?? 0
     const angle = index * 2.399963229728653 + categoryIndex * 0.28 - Math.PI / 2
     const ring = index % 3
-    const radius = 25 + ring * 9 + (index % 2) * 2
+    const radius = 28 + ring * 12 + (index % 2) * 3
     const score = Number(item.score || 0)
     let x = 50 + Math.cos(angle) * radius
     let y = 50 + Math.sin(angle) * radius
@@ -370,14 +396,25 @@ const starItems = computed(() => {
           : score >= 2
             ? 'shape-achievement-mid'
             : 'shape-achievement-low'
+    const driftSeed = Math.abs(Math.sin((index + 1) * 12.9898 + score * 78.233) * 43758.5453)
+    const driftA = driftSeed - Math.floor(driftSeed)
+    const driftB = Math.abs(Math.sin((index + 3) * 7.233 + score * 17.17))
     return {
       ...item,
       star_id: `${item.application_id || 'star'}-${index}`,
       x: Math.max(9, Math.min(91, x)),
       y: Math.max(9, Math.min(91, y)),
-      size: Math.max(11, Math.min(24, 10 + Math.sqrt(Math.max(score, 0)) * (item.sub_type === 'basic' ? 1.9 : 2.7))),
+      size: Math.max(13, Math.min(32, 12 + Math.sqrt(Math.max(score, 0)) * (item.sub_type === 'basic' ? 2.2 : 3.2))),
       color: item.color || timelineColor(item),
       delay: `${(index % 9) * -0.42}s`,
+      drift_x: `${(driftA - 0.5) * 16}px`,
+      drift_y: `${(driftB - 0.5) * 14}px`,
+      drift_mid_x: `${(driftB - 0.5) * -13}px`,
+      drift_mid_y: `${(driftA - 0.5) * 11}px`,
+      drift_return_x: `${(driftA - 0.5) * -5.6}px`,
+      drift_return_y: `${(driftB - 0.5) * 7.7}px`,
+      drift_duration: `${5.6 + driftA * 5.8}s`,
+      twinkle_duration: `${2.2 + driftB * 3.4}s`,
       orbit_angle: angle,
       shape,
     }
@@ -409,8 +446,9 @@ const selectedStarInfo = computed(() => {
   return starItems.value[0]
 })
 const storyMetrics = computed(() => report.value?.story_metrics || {})
+const storyCopyPayload = computed(() => storyCopy.value || report.value?.story_copy || null)
 const storyCards = computed(() => {
-  const cards = storyCopy.value?.story_cards || report.value?.story_cards
+  const cards = storyCopyPayload.value?.story_cards || report.value?.story_cards
   if (Array.isArray(cards) && cards.length) return cards
   return [
     {
@@ -424,17 +462,30 @@ const storyCards = computed(() => {
     },
   ]
 })
+const planetVariants = ['planet-aurora', 'planet-ringed', 'planet-crimson', 'planet-ocean', 'planet-gold', 'planet-ice']
 const storyPlanets = computed(() => {
   return storyCards.value.map((card, index) => {
     const numericValue = Number(card.value || 0)
-    const bonusSize = Math.min(20, Math.sqrt(Math.max(numericValue, 0)) * 4.4)
+    const bonusSize = Math.min(34, Math.sqrt(Math.max(numericValue, 0)) * 5.2)
     return {
       ...card,
-      size: 184 + bonusSize,
+      size: 176 + bonusSize + (index % 3) * 8,
       drift: index * -0.7,
+      index,
+      variant: planetVariants[index % planetVariants.length],
       color: card.color || radarCategories.value[index % Math.max(1, radarCategories.value.length)]?.color || '#9c0c13',
     }
   })
+})
+const activeStoryPlanets = computed(() => {
+  if (storyBodies.value.length) return storyBodies.value
+  return storyPlanets.value.map((planet, index) => ({
+    ...planet,
+    x: 64 + (index % 3) * 236,
+    y: 54 + Math.floor(index / 3) * 236,
+    vx: 0,
+    vy: 0,
+  }))
 })
 const announcementTitle = computed(() => report.value?.announcement?.title || '公示个人报告')
 const evaluationText = computed(() => (report.value?.evaluation?.content || '').trim())
@@ -457,13 +508,62 @@ const scoreSatellites = computed(() => {
 })
 const heroQuote = computed(
   () =>
-    storyCopy.value?.hero_quote ||
+    storyCopyPayload.value?.hero_quote ||
+    report.value?.hero_quote ||
     `${storyMetrics.value?.term_label || '这个学期'}，你把校园里的努力写成了自己的星轨。`
 )
 const endingText = computed(() => {
-  if (storyCopy.value?.ending_text) return storyCopy.value.ending_text
+  if (storyCopyPayload.value?.ending_text) return storyCopyPayload.value.ending_text
+  if (report.value?.ending_text) return report.value.ending_text
   const growth = storyMetrics.value?.growth_category?.name || '还没完全点亮的方向'
   return `${growth}会是下一段故事很好的入口。把目标放小一点，把行动做稳一点，下一次打开报告时，会看到更清晰的自己。`
+})
+const categoryScoreStats = computed(() => {
+  return radarCategories.value
+    .map((category) => {
+      const score = Number(category.score || 0)
+      const maxScore = Number(category.max_score || 0)
+      return {
+        ...category,
+        score,
+        max_score: maxScore,
+        percent: maxScore > 0 ? score / maxScore : 0,
+      }
+    })
+    .sort((a, b) => b.percent - a.percent)
+})
+const letterSignals = computed(() => {
+  const stats = categoryScoreStats.value
+  const strongest = stats[0] || { name: '优势方向', score: 0, max_score: 0, percent: 0 }
+  const growth = [...stats].reverse().find((item) => item.max_score > 0) || strongest
+  const activeCount = stats.filter((item) => item.score > 0).length
+  const total = report.value?.score_summary?.actual_score || 0
+  return [
+    {
+      key: 'rocket',
+      type: 'rocket',
+      label: '主推进',
+      title: `${strongest.name || '优势方向'}最亮`,
+      value: `${scoreText(strongest.score)}/${scoreText(strongest.max_score)}`,
+      description: `这一侧的星焰最稳定，像远航的主推进器，已经为你的综测轨迹提供了清晰动能。`,
+    },
+    {
+      key: 'white-hole',
+      type: 'white-hole',
+      label: '白洞星芒',
+      title: `${activeCount || 0}个方向已被点亮`,
+      value: `总分 ${scoreText(total)}`,
+      description: '被点亮的方向会向外释放光，下一步可以让这些亮点彼此连接，形成更完整的成长星座。',
+    },
+    {
+      key: 'black-hole',
+      type: 'black-hole',
+      label: '引力场',
+      title: `${growth.name || '待提升方向'}仍在吸纳星尘`,
+      value: `${Math.round((growth.percent || 0) * 100)}%`,
+      description: '这里不是空白，而是新的引力中心。把一次小行动投入进去，它会慢慢变成下一学期的亮点。',
+    },
+  ]
 })
 
 const scoreText = (value) => {
@@ -494,6 +594,14 @@ const starStyle = (star) => ({
   '--accent': star.color || '#9c0c13',
   '--size': `${star.size}px`,
   '--star-delay': star.delay || '0s',
+  '--star-drift-x': star.drift_x || '6px',
+  '--star-drift-y': star.drift_y || '-4px',
+  '--star-drift-mid-x': star.drift_mid_x || '-5px',
+  '--star-drift-mid-y': star.drift_mid_y || '5px',
+  '--star-return-x': star.drift_return_x || '-3px',
+  '--star-return-y': star.drift_return_y || '4px',
+  '--star-duration': star.drift_duration || '7s',
+  '--twinkle-duration': star.twinkle_duration || '3.4s',
   left: `${star.x}%`,
   top: `${star.y}%`,
 })
@@ -502,10 +610,223 @@ const storyPlanetStyle = (planet) => ({
   '--accent': planet.color || '#9c0c13',
   '--orb-size': `${planet.size || 190}px`,
   '--float-delay': `${planet.drift || 0}s`,
+  '--planet-x': `${planet.x || 0}px`,
+  '--planet-y': `${planet.y || 0}px`,
+  '--planet-tilt': `${planet.tilt || 0}deg`,
+  '--planet-counter-tilt': `${-(planet.tilt || 0)}deg`,
+  width: `${planet.size || 190}px`,
+  height: `${planet.size || 190}px`,
+  transform: `translate3d(${planet.x || 0}px, ${planet.y || 0}px, 0) rotate(${planet.tilt || 0}deg)`,
 })
 
 const selectStar = (star) => {
   selectedStar.value = star
+}
+
+const clampVelocity = (value, min = 14, max = 48) => {
+  const sign = value >= 0 ? 1 : -1
+  const magnitude = Math.min(max, Math.max(min, Math.abs(value)))
+  return sign * magnitude
+}
+
+const stopStoryPhysics = () => {
+  if (storyAnimationFrame) cancelAnimationFrame(storyAnimationFrame)
+  storyAnimationFrame = 0
+  storyLastTick = 0
+}
+
+const createStoryBodies = () => {
+  const stage = storyCosmosRef.value
+  const planets = storyPlanets.value
+  heldStoryPlanetKey.value = null
+  if (!stage || !planets.length) {
+    storyBodies.value = []
+    stopStoryPhysics()
+    return
+  }
+  const rect = stage.getBoundingClientRect()
+  const width = Math.max(320, rect.width)
+  const height = Math.max(560, rect.height)
+  const count = planets.length
+  const columns = Math.max(1, Math.ceil(Math.sqrt(count)))
+  const rows = Math.max(1, Math.ceil(count / columns))
+  const cellWidth = width / columns
+  const cellHeight = height / rows
+  const mobile = width < 680
+  const bodies = planets.map((planet, index) => {
+    const size = Math.min(mobile ? 168 : 238, Math.max(mobile ? 138 : 168, planet.size || 184))
+    const col = index % columns
+    const row = Math.floor(index / columns)
+    const jitterX = ((index * 37) % 43) - 21
+    const jitterY = ((index * 29) % 37) - 18
+    const edgePad = mobile ? 28 : 42
+    const x = Math.max(edgePad, Math.min(width - size - edgePad, col * cellWidth + cellWidth / 2 - size / 2 + jitterX))
+    const y = Math.max(edgePad, Math.min(height - size - edgePad, row * cellHeight + cellHeight / 2 - size / 2 + jitterY))
+    const baseTilt = ((index * 11) % 12) - 6
+    return {
+      ...planet,
+      size,
+      x,
+      y,
+      vx: clampVelocity((index % 2 === 0 ? 1 : -1) * (18 + (index % 5) * 5)),
+      vy: clampVelocity((index % 3 === 0 ? 1 : -1) * (16 + (index % 4) * 4)),
+      radius: size * 0.48,
+      mass: size / 180,
+      baseTilt,
+      tilt: baseTilt,
+      wobblePhase: index * 1.41,
+    }
+  })
+  storyBodies.value = bodies
+}
+
+const tickStoryPhysics = (now) => {
+  const stage = storyCosmosRef.value
+  if (!stage || !storyBodies.value.length) {
+    stopStoryPhysics()
+    return
+  }
+  const rect = stage.getBoundingClientRect()
+  const width = Math.max(320, rect.width)
+  const height = Math.max(520, rect.height)
+  const last = storyLastTick || now
+  const dt = Math.min(0.034, Math.max(0.006, (now - last) / 1000))
+  storyLastTick = now
+  const bodies = storyBodies.value.map((body) => ({ ...body }))
+  const heldKey = heldStoryPlanetKey.value
+
+  bodies.forEach((body, index) => {
+    const held = body.key === heldKey
+    if (!held) {
+      body.x += body.vx * dt
+      body.y += body.vy * dt
+      body.tilt = (body.baseTilt || 0) + Math.sin(now / 1200 + (body.wobblePhase || 0)) * 2.4
+    }
+
+    const edgePad = width < 680 ? 24 : 36
+    const minX = edgePad
+    const minY = edgePad
+    const maxX = Math.max(minX, width - body.size - edgePad)
+    const maxY = Math.max(minY, height - body.size - edgePad)
+    if (body.x <= minX) {
+      body.x = minX
+      body.vx = Math.abs(body.vx) * 0.96
+    } else if (body.x >= maxX) {
+      body.x = maxX
+      body.vx = -Math.abs(body.vx) * 0.96
+    }
+    if (body.y <= minY) {
+      body.y = minY
+      body.vy = Math.abs(body.vy) * 0.96
+    } else if (body.y >= maxY) {
+      body.y = maxY
+      body.vy = -Math.abs(body.vy) * 0.96
+    }
+  })
+
+  for (let i = 0; i < bodies.length; i += 1) {
+    for (let j = i + 1; j < bodies.length; j += 1) {
+      const a = bodies[i]
+      const b = bodies[j]
+      const ax = a.x + a.size / 2
+      const ay = a.y + a.size / 2
+      const bx = b.x + b.size / 2
+      const by = b.y + b.size / 2
+      let dx = bx - ax
+      let dy = by - ay
+      let distance = Math.sqrt(dx * dx + dy * dy)
+      const minDistance = a.radius + b.radius + 8
+      if (distance >= minDistance) continue
+      if (!distance) {
+        distance = 1
+        dx = 1
+        dy = 0
+      }
+      const nx = dx / distance
+      const ny = dy / distance
+      const overlap = minDistance - distance
+      const aHeld = a.key === heldKey
+      const bHeld = b.key === heldKey
+      if (aHeld && !bHeld) {
+        b.x += overlap * nx
+        b.y += overlap * ny
+      } else if (!aHeld && bHeld) {
+        a.x -= overlap * nx
+        a.y -= overlap * ny
+      } else {
+        a.x -= (overlap * nx) / 2
+        a.y -= (overlap * ny) / 2
+        b.x += (overlap * nx) / 2
+        b.y += (overlap * ny) / 2
+      }
+      const tangentX = -ny
+      const tangentY = nx
+      const dpTanA = a.vx * tangentX + a.vy * tangentY
+      const dpTanB = b.vx * tangentX + b.vy * tangentY
+      const dpNormA = a.vx * nx + a.vy * ny
+      const dpNormB = b.vx * nx + b.vy * ny
+      const mA = a.mass || 1
+      const mB = b.mass || 1
+      if (aHeld && !bHeld) {
+        const dot = b.vx * nx + b.vy * ny
+        if (dot < 0) {
+          b.vx = clampVelocity(b.vx - 2 * dot * nx)
+          b.vy = clampVelocity(b.vy - 2 * dot * ny)
+        }
+      } else if (!aHeld && bHeld) {
+        const dot = a.vx * nx + a.vy * ny
+        if (dot > 0) {
+          a.vx = clampVelocity(a.vx - 2 * dot * nx)
+          a.vy = clampVelocity(a.vy - 2 * dot * ny)
+        }
+      } else if (!aHeld && !bHeld) {
+        const momentumA = (dpNormA * (mA - mB) + 2 * mB * dpNormB) / (mA + mB)
+        const momentumB = (dpNormB * (mB - mA) + 2 * mA * dpNormA) / (mA + mB)
+        a.vx = clampVelocity(tangentX * dpTanA + nx * momentumA)
+        a.vy = clampVelocity(tangentY * dpTanA + ny * momentumA)
+        b.vx = clampVelocity(tangentX * dpTanB + nx * momentumB)
+        b.vy = clampVelocity(tangentY * dpTanB + ny * momentumB)
+      }
+    }
+  }
+
+  storyBodies.value = bodies
+  storyAnimationFrame = requestAnimationFrame(tickStoryPhysics)
+}
+
+const startStoryPhysics = () => {
+  stopStoryPhysics()
+  if (!storyBodies.value.length) return
+  storyAnimationFrame = requestAnimationFrame(tickStoryPhysics)
+}
+
+const resetStoryPhysics = async () => {
+  if (!reportStarted.value) return
+  await nextTick()
+  createStoryBodies()
+  startStoryPhysics()
+}
+
+const holdStoryPlanet = (key) => {
+  heldStoryPlanetKey.value = key
+}
+
+const releaseStoryPlanet = (key) => {
+  if (heldStoryPlanetKey.value === key) heldStoryPlanetKey.value = null
+}
+
+const nudgeStoryPlanet = (key, strong = false) => {
+  if (!storyBodies.value.length) return
+  const direction = strong ? 1.35 : 0.75
+  storyBodies.value = storyBodies.value.map((body, index) => {
+    if (body.key !== key) return body
+    const angle = ((index + 1) * 1.73 + performance.now() / 1200) % (Math.PI * 2)
+    return {
+      ...body,
+      vx: clampVelocity(body.vx + Math.cos(angle) * 24 * direction),
+      vy: clampVelocity(body.vy + Math.sin(angle) * 24 * direction),
+    }
+  })
 }
 
 const startPreparingMessages = () => {
@@ -531,25 +852,13 @@ const startReport = async () => {
   report.value = null
   storyCopy.value = null
   try {
-    const reportPromise = announcementService.getMyReport(announcementId)
-    const storyPromise = announcementService.generateMyReportStoryCopy(announcementId).catch((error) => {
-      console.warn('generate story copy failed, use rule based copy', error)
-      return null
-    })
-    const [reportRes, storyRes] = await Promise.all([reportPromise, storyPromise])
+    const reportRes = await announcementService.getMyReport(announcementId)
     report.value = reportRes?.data || null
     if (!report.value) {
       throw new Error('暂无报告数据')
     }
-    const generatedStory = storyRes?.data || null
-    if (Array.isArray(generatedStory?.story_cards) && generatedStory.story_cards.length) {
-      storyCopy.value = generatedStory
-    }
-    if (generatedStory?.evaluation) {
-      report.value = {
-        ...report.value,
-        evaluation: generatedStory.evaluation,
-      }
+    if (Array.isArray(report.value?.story_copy?.story_cards) && report.value.story_copy.story_cards.length) {
+      storyCopy.value = report.value.story_copy
     }
     reportStarted.value = true
     await nextTick()
@@ -557,6 +866,7 @@ const startReport = async () => {
     renderChart()
     setupObserver()
     animateTotal()
+    resetStoryPhysics()
   } catch (error) {
     report.value = null
     reportStarted.value = false
@@ -707,6 +1017,7 @@ const scrollToSection = (key) => {
 
 const handleResize = () => {
   chart?.resize()
+  resetStoryPhysics()
 }
 
 const goBack = () => {
@@ -719,6 +1030,10 @@ watch(report, async () => {
   setupObserver()
 })
 
+watch(storyCards, () => {
+  resetStoryPhysics()
+})
+
 onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
@@ -728,6 +1043,7 @@ onBeforeUnmount(() => {
   stopPreparingMessages()
   observer?.disconnect()
   if (animationFrame) cancelAnimationFrame(animationFrame)
+  stopStoryPhysics()
   chart?.dispose()
   chart = null
 })
@@ -785,6 +1101,8 @@ onBeforeUnmount(() => {
   position: relative;
   height: calc(100vh - 62px);
   overflow-y: auto;
+  background:
+    linear-gradient(180deg, #fffaf2 0%, #f8fbff 42%, #0b1020 70%, #070b16 100%);
   scroll-snap-type: y proximity;
   scroll-behavior: smooth;
 }
@@ -960,9 +1278,12 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(0, 1fr) 430px;
   gap: 44px;
   align-items: center;
+  overflow: hidden;
   background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(248, 251, 255, 0.9)),
     linear-gradient(90deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.38)),
     repeating-linear-gradient(135deg, rgba(156, 12, 19, 0.08) 0 1px, transparent 1px 18px);
+  box-shadow: inset 0 -92px 120px rgba(248, 251, 255, 0.82);
 }
 
 .cover-copy h1 {
@@ -1091,6 +1412,18 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, rgba(255, 252, 245, 0.92), rgba(238, 248, 245, 0.9));
 }
 
+.constellation-section {
+  display: flex;
+  min-height: calc(100vh - 62px);
+  flex-direction: column;
+  justify-content: center;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(255, 252, 245, 0.94) 48%, rgba(248, 251, 255, 0.92) 100%),
+    radial-gradient(circle at 15% 16%, rgba(214, 164, 69, 0.14), transparent 28%),
+    radial-gradient(circle at 88% 74%, rgba(37, 99, 235, 0.12), transparent 30%);
+  box-shadow: inset 0 78px 110px rgba(255, 255, 255, 0.56), inset 0 -80px 120px rgba(248, 251, 255, 0.72);
+}
+
 .story-section {
   display: flex;
   height: auto;
@@ -1098,6 +1431,45 @@ onBeforeUnmount(() => {
   flex-direction: column;
   overflow: visible;
   scroll-snap-align: none;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(214, 164, 69, 0.16), transparent 22%),
+    radial-gradient(circle at 82% 20%, rgba(37, 99, 235, 0.16), transparent 26%),
+    linear-gradient(180deg, #080d18 0%, #101827 56%, #070b16 100%);
+}
+
+.story-section::before,
+.story-section::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.story-section::before {
+  top: 0;
+  height: 130px;
+  background: linear-gradient(180deg, rgba(8, 13, 24, 0.28), transparent);
+}
+
+.story-section::after {
+  bottom: -1px;
+  height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(7, 11, 22, 0.78));
+}
+
+.story-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.story-section .section-kicker {
+  color: #f2c66a;
+}
+
+.story-section .section-heading h2 {
+  color: #fff8e2;
+  text-shadow: 0 0 24px rgba(214, 164, 69, 0.22);
 }
 
 .story-grid {
@@ -1119,14 +1491,16 @@ onBeforeUnmount(() => {
 
 .constellation-stage {
   display: grid;
-  grid-template-columns: minmax(440px, 1fr) minmax(290px, 360px);
-  gap: 26px;
-  align-items: center;
+  grid-template-columns: minmax(620px, 1fr) minmax(320px, 380px);
+  gap: 32px;
+  align-items: stretch;
+  flex: 1;
+  min-height: clamp(640px, calc(100vh - 250px), 820px);
 }
 
 .star-orbit {
   position: relative;
-  min-height: 540px;
+  min-height: 100%;
   overflow: hidden;
   border: 1px solid rgba(214, 164, 69, 0.18);
   border-radius: 8px;
@@ -1164,7 +1538,7 @@ onBeforeUnmount(() => {
   left: 50%;
   top: 50%;
   z-index: 2;
-  width: min(92%, 560px);
+  width: min(94%, 820px);
   aspect-ratio: 1;
   transform-origin: center;
   transform: translate(-50%, -50%);
@@ -1197,7 +1571,7 @@ onBeforeUnmount(() => {
   background: transparent;
   cursor: pointer;
   transform: translate(-50%, -50%);
-  animation: star-breathe 4.6s ease-in-out infinite;
+  animation: star-free-drift var(--star-duration) ease-in-out infinite;
   animation-delay: var(--star-delay);
 }
 
@@ -1207,6 +1581,7 @@ onBeforeUnmount(() => {
   height: 100%;
   background: var(--accent);
   filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 58%, transparent));
+  animation: star-core-twinkle var(--twinkle-duration) ease-in-out infinite;
   transition: transform 0.25s ease, filter 0.25s ease;
 }
 
@@ -1414,10 +1789,28 @@ onBeforeUnmount(() => {
 }
 
 .radar-section {
+  overflow: hidden;
   background:
     linear-gradient(120deg, rgba(37, 99, 235, 0.08), transparent 42%),
     linear-gradient(300deg, rgba(214, 164, 69, 0.12), transparent 42%),
     #f8fbff;
+  box-shadow: inset 0 -112px 150px rgba(8, 13, 24, 0.16);
+}
+
+.radar-section::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 150px;
+  background: linear-gradient(180deg, transparent, rgba(8, 13, 24, 0.28));
+  content: '';
+  pointer-events: none;
+}
+
+.radar-section > * {
+  position: relative;
+  z-index: 1;
 }
 
 .radar-stage {
@@ -1449,6 +1842,38 @@ onBeforeUnmount(() => {
   z-index: 1;
   min-height: 510px;
   animation: radar-panel-breathe 5.6s ease-in-out infinite;
+}
+
+.radar-chart::before,
+.radar-chart::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(72%, 430px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.radar-chart::before {
+  z-index: 3;
+  background:
+    conic-gradient(from 0deg, rgba(214, 164, 69, 0.38) 0deg, rgba(214, 164, 69, 0.16) 28deg, transparent 62deg 360deg);
+  mix-blend-mode: multiply;
+  opacity: 0.58;
+  animation: radar-sweep 4.8s linear infinite;
+}
+
+.radar-chart::after {
+  z-index: 2;
+  border: 1px solid rgba(214, 164, 69, 0.36);
+  box-shadow:
+    0 0 0 0 rgba(214, 164, 69, 0.2),
+    inset 0 0 26px rgba(214, 164, 69, 0.08);
+  opacity: 0.72;
+  animation: radar-scan-pulse 4.8s ease-out infinite;
 }
 
 .radar-caption {
@@ -1483,101 +1908,140 @@ onBeforeUnmount(() => {
 
 .story-cosmos {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: clamp(28px, 4vw, 54px);
-  align-content: start;
-  justify-items: center;
+  display: block;
   flex: 0 0 auto;
-  min-height: auto;
+  min-height: clamp(640px, 70vh, 780px);
   margin-top: 20px;
-  padding: clamp(20px, 3vw, 42px) clamp(18px, 3vw, 44px) clamp(54px, 7vw, 84px);
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
+  padding: clamp(20px, 3vw, 42px);
+  overflow: hidden;
+  border: 1px solid rgba(244, 205, 111, 0.18);
+  border-radius: 28px;
   background:
-    radial-gradient(circle at 20% 24%, rgba(156, 12, 19, 0.16), transparent 24%),
-    radial-gradient(circle at 80% 28%, rgba(37, 99, 235, 0.14), transparent 22%),
-    radial-gradient(circle at 58% 78%, rgba(214, 164, 69, 0.18), transparent 26%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(242, 247, 255, 0.72));
-  box-shadow: inset 0 0 110px rgba(37, 50, 74, 0.06), 0 24px 70px rgba(35, 45, 66, 0.1);
+    radial-gradient(circle at 18% 18%, rgba(214, 164, 69, 0.22), transparent 22%),
+    radial-gradient(circle at 82% 28%, rgba(37, 99, 235, 0.2), transparent 24%),
+    radial-gradient(circle at 58% 78%, rgba(156, 12, 19, 0.2), transparent 28%),
+    linear-gradient(135deg, #070b16 0%, #101827 54%, #080d18 100%);
+  box-shadow:
+    inset 0 0 120px rgba(0, 0, 0, 0.42),
+    0 30px 90px rgba(7, 11, 22, 0.2);
 }
 
 .story-nebula {
   position: absolute;
   inset: 0;
   background:
-    repeating-radial-gradient(circle at 18% 20%, rgba(156, 12, 19, 0.12) 0 1px, transparent 1px 34px),
-    repeating-radial-gradient(circle at 76% 72%, rgba(37, 99, 235, 0.12) 0 1px, transparent 1px 42px);
-  opacity: 0.42;
+    radial-gradient(circle, rgba(255, 230, 166, 0.9) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(214, 164, 69, 0.72) 0 1.5px, transparent 2.6px),
+    radial-gradient(ellipse, rgba(255, 246, 221, 0.6) 0 1px, transparent 3px);
+  background-position: 5% 10%, 68% 24%, 36% 88%;
+  background-size: 86px 80px, 138px 126px, 210px 160px;
+  opacity: 0.68;
   pointer-events: none;
+  animation: galaxy-star-drift 28s linear infinite;
 }
 
 .story-orbit-lines {
   position: absolute;
-  inset: 7%;
-  width: 86%;
-  height: 86%;
+  inset: 4%;
+  width: 92%;
+  height: 92%;
   pointer-events: none;
+  opacity: 0.8;
 }
 
 .story-orbit-lines path {
   fill: none;
-  stroke: rgba(37, 50, 74, 0.13);
-  stroke-dasharray: 2 6;
+  stroke: rgba(244, 205, 111, 0.2);
+  stroke-dasharray: 4 10;
   stroke-linecap: round;
-  stroke-width: 0.35;
+  stroke-width: 0.55;
   vector-effect: non-scaling-stroke;
+  animation: timeline-drift 14s linear infinite;
 }
 
 .story-orb {
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
-  width: min(100%, 286px);
-  max-width: 100%;
-  aspect-ratio: 1;
-  min-height: 0;
   flex-direction: column;
   justify-content: center;
-  padding: 30px;
+  padding: clamp(22px, 2.6vw, 32px);
   border: 0;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 31% 23%, rgba(255, 255, 255, 0.95), transparent 17%),
-    radial-gradient(circle at 66% 76%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 38%),
-    linear-gradient(145deg, color-mix(in srgb, var(--accent) 38%, white), var(--accent));
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.96), transparent 15%),
+    radial-gradient(circle at 66% 76%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 40%),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 34%, white), var(--accent));
   box-shadow:
     inset -34px -38px 58px rgba(29, 37, 56, 0.22),
     inset 18px 18px 30px rgba(255, 255, 255, 0.38),
-    0 28px 70px color-mix(in srgb, var(--accent) 26%, transparent);
+    0 28px 70px color-mix(in srgb, var(--accent) 32%, transparent);
+  cursor: pointer;
   text-align: center;
-  animation: story-orb-drift 6.4s ease-in-out infinite;
-  animation-delay: var(--float-delay);
   box-sizing: border-box;
   overflow: visible;
+  outline: none;
+  will-change: transform;
+  transition: box-shadow 0.22s ease, filter 0.22s ease;
 }
 
-.story-orb:nth-of-type(odd) {
-  animation-name: story-orb-drift-alt;
+.story-orb:hover,
+.story-orb:focus-visible,
+.story-orb.holding {
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    inset -34px -38px 58px rgba(29, 37, 56, 0.22),
+    inset 18px 18px 30px rgba(255, 255, 255, 0.42),
+    0 32px 82px color-mix(in srgb, var(--accent) 42%, transparent),
+    0 0 44px rgba(244, 205, 111, 0.16);
+}
+
+.story-orb.holding {
+  z-index: 12;
+}
+
+.story-orb::before,
+.story-orb::after {
+  position: absolute;
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+}
+
+.story-orb::before {
+  inset: 8%;
+  opacity: 0.35;
+  background:
+    repeating-linear-gradient(14deg, rgba(255, 255, 255, 0.28) 0 2px, transparent 2px 15px),
+    radial-gradient(circle at 74% 28%, rgba(255, 255, 255, 0.22), transparent 17%);
+  mix-blend-mode: screen;
+}
+
+.story-orb::after {
+  inset: 2%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 32px rgba(255, 255, 255, 0.08);
 }
 
 .story-orb-glow {
   position: absolute;
-  inset: -26px;
+  inset: -30px;
   border-radius: 50%;
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent), transparent 58%);
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 60%);
   opacity: 0.72;
   pointer-events: none;
+  animation: radar-glow-breathe 5s ease-in-out infinite;
 }
 
 .story-orb-ring {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 112%;
-  height: 38%;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  width: 118%;
+  height: 36%;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(-15deg);
@@ -1596,18 +2060,101 @@ onBeforeUnmount(() => {
 
 .story-orb-body {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
   box-sizing: border-box;
-  text-shadow: 0 1px 16px rgba(255, 255, 255, 0.52);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.38);
+  transform: rotate(var(--planet-counter-tilt));
+  transition: transform 0.24s ease;
+}
+
+.story-orb.planet-ringed .story-orb-ring {
+  width: 140%;
+  height: 32%;
+  border-width: 2px;
+  border-color: rgba(244, 205, 111, 0.7);
+  box-shadow: 0 0 22px rgba(244, 205, 111, 0.26);
+}
+
+.story-orb.planet-aurora {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.95), transparent 14%),
+    conic-gradient(from 120deg, rgba(37, 99, 235, 0.55), rgba(15, 159, 122, 0.72), rgba(214, 164, 69, 0.58), rgba(37, 99, 235, 0.55)),
+    linear-gradient(145deg, #5ad1d1, #2563eb);
+}
+
+.story-orb.planet-crimson {
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 244, 224, 0.92), transparent 13%),
+    radial-gradient(ellipse at 70% 76%, rgba(74, 10, 31, 0.48), transparent 38%),
+    radial-gradient(ellipse at 22% 68%, rgba(244, 205, 111, 0.18), transparent 30%),
+    repeating-linear-gradient(156deg, rgba(255, 236, 198, 0.2) 0 3px, transparent 3px 24px),
+    linear-gradient(145deg, #e8a77c 0%, #b54b52 38%, #631129 74%, #2b0716 100%);
+}
+
+.story-orb.planet-crimson::before {
+  inset: 9%;
+  opacity: 0.46;
+  background:
+    radial-gradient(ellipse at 70% 28%, rgba(255, 247, 222, 0.26), transparent 22%),
+    linear-gradient(118deg, transparent 0 32%, rgba(244, 205, 111, 0.36) 33% 34%, transparent 35% 100%),
+    linear-gradient(38deg, transparent 0 54%, rgba(255, 205, 140, 0.18) 55% 57%, transparent 58% 100%);
+  mix-blend-mode: screen;
+}
+
+.story-orb.planet-crimson::after {
+  inset: 3%;
+  border-color: rgba(255, 231, 183, 0.24);
+  box-shadow:
+    inset -22px -24px 42px rgba(31, 7, 17, 0.26),
+    inset 18px 12px 28px rgba(255, 227, 177, 0.08);
+}
+
+.story-orb.planet-crimson .story-orb-ring {
+  width: 132%;
+  height: 30%;
+  border-color: rgba(244, 205, 111, 0.42);
+  transform: translate(-50%, -50%) rotate(8deg);
+}
+
+.story-orb.planet-crimson .story-orb-ring i {
+  background: #f2c66a;
+  box-shadow: 0 0 20px rgba(244, 205, 111, 0.7);
+}
+
+.story-orb.planet-ocean {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.94), transparent 14%),
+    radial-gradient(ellipse at 70% 42%, rgba(255, 255, 255, 0.22), transparent 26%),
+    repeating-linear-gradient(-18deg, rgba(255, 255, 255, 0.18) 0 5px, transparent 5px 19px),
+    linear-gradient(145deg, #0f9f7a, #2563eb);
+}
+
+.story-orb.planet-gold {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.96), transparent 14%),
+    radial-gradient(circle at 70% 72%, rgba(156, 12, 19, 0.28), transparent 32%),
+    repeating-radial-gradient(circle at 40% 48%, rgba(255, 255, 255, 0.18) 0 2px, transparent 2px 12px),
+    linear-gradient(145deg, #ffe19a, #d6a445 64%, #9c0c13);
+}
+
+.story-orb.planet-ice {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.96), transparent 14%),
+    repeating-linear-gradient(38deg, rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 24px),
+    linear-gradient(145deg, #f3fbff, #9cc8ff 44%, #6d80c9);
+}
+
+.story-orb.planet-ice::before {
+  clip-path: polygon(0 22%, 28% 18%, 46% 38%, 74% 28%, 100% 36%, 100% 70%, 70% 64%, 52% 78%, 22% 68%, 0 74%);
 }
 
 .story-orb span {
-  color: rgba(17, 24, 39, 0.68);
+  color: rgba(255, 246, 221, 0.72);
   font-size: 12px;
   font-weight: 800;
 }
@@ -1615,14 +2162,14 @@ onBeforeUnmount(() => {
 .story-orb strong {
   display: block;
   margin: 8px 0 8px;
-  color: #111827;
+  color: #fff8e2;
   font-size: 44px;
   line-height: 1;
 }
 
 .story-orb strong em {
   margin-left: 4px;
-  color: #687386;
+  color: rgba(255, 246, 221, 0.72);
   font-size: 13px;
   font-style: normal;
 }
@@ -1634,7 +2181,7 @@ onBeforeUnmount(() => {
   max-width: 82%;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  color: #111827;
+  color: #fff;
   font-size: 18px;
   line-height: 1.25;
 }
@@ -1642,18 +2189,22 @@ onBeforeUnmount(() => {
 .story-orb-cabin {
   position: absolute;
   left: 50%;
-  top: calc(100% - 26px);
+  top: 50%;
   z-index: 6;
-  width: min(300px, 112%);
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 22px 52px rgba(35, 45, 66, 0.18);
+  width: clamp(280px, 150%, 390px);
+  max-height: 82%;
+  padding: 18px 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.08)),
+    rgba(8, 12, 24, 0.62);
+  box-shadow: 0 22px 52px rgba(7, 11, 22, 0.22);
   opacity: 0;
   pointer-events: none;
   text-align: left;
-  transform: translate(-50%, 10px) scale(0.98);
+  transform: translate(-50%, -50%) rotate(var(--planet-counter-tilt)) scale(0.94);
   transition: opacity 0.26s ease, transform 0.26s ease;
   backdrop-filter: blur(14px);
 }
@@ -1661,22 +2212,22 @@ onBeforeUnmount(() => {
 .story-orb:hover .story-orb-cabin,
 .story-orb:focus-within .story-orb-cabin {
   opacity: 1;
-  transform: translate(-50%, 0) scale(1);
+  transform: translate(-50%, -50%) rotate(var(--planet-counter-tilt)) scale(1);
 }
 
 .story-orb-cabin p {
   margin: 0;
-  color: #4b5563;
-  font-size: 12px;
-  line-height: 1.55;
+  color: rgba(255, 248, 226, 0.9);
+  font-size: 14px;
+  line-height: 1.72;
 }
 
 .story-orb-cabin blockquote {
-  margin: 8px 0 0;
-  color: #1f2937;
-  font-size: 12px;
+  margin: 12px 0 0;
+  color: #fff8e2;
+  font-size: 14px;
   font-weight: 800;
-  line-height: 1.45;
+  line-height: 1.62;
 }
 
 .story-card {
@@ -1797,29 +2348,285 @@ onBeforeUnmount(() => {
 }
 
 .timeline-section {
-  min-height: auto;
-  scroll-snap-align: none;
+  min-height: calc(100vh - 62px);
+  overflow: hidden;
+  scroll-snap-align: start;
   background:
-    radial-gradient(circle at 20% 12%, rgba(214, 164, 69, 0.16), transparent 24%),
-    radial-gradient(circle at 80% 86%, rgba(37, 99, 235, 0.12), transparent 28%),
-    linear-gradient(180deg, #fffaf2, #f7fbff);
+    radial-gradient(circle at 18% 16%, rgba(214, 164, 69, 0.3), transparent 22%),
+    radial-gradient(circle at 82% 78%, rgba(37, 99, 235, 0.22), transparent 30%),
+    radial-gradient(circle at 56% 42%, rgba(156, 12, 19, 0.2), transparent 36%),
+    linear-gradient(180deg, #070b16 0%, #101728 48%, #080c15 100%);
+  color: #f8ecd0;
+}
+
+.timeline-section::before,
+.timeline-section::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.timeline-section::before {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(circle, rgba(255, 230, 166, 0.95) 0 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(214, 164, 69, 0.8) 0 1.5px, transparent 2.4px),
+    radial-gradient(ellipse, rgba(255, 242, 203, 0.7) 0 1px, transparent 3px);
+  background-position: 6% 10%, 72% 18%, 34% 84%;
+  background-size: 88px 84px, 142px 126px, 196px 156px;
+  animation: galaxy-star-drift 24s linear infinite;
+}
+
+.timeline-section::after {
+  opacity: 0.78;
+  background:
+    conic-gradient(from 160deg at 50% 52%, transparent 0 58deg, rgba(214, 164, 69, 0.16) 78deg, transparent 118deg 360deg),
+    radial-gradient(ellipse at 52% 48%, rgba(255, 255, 255, 0.16), transparent 46%);
+  filter: blur(0.2px);
+  transform: rotate(-7deg) scale(1.16);
+}
+
+.timeline-section .section-heading {
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-section .section-kicker {
+  color: #f2c66a;
+}
+
+.timeline-section .section-heading h2 {
+  color: #fff7df;
+  text-shadow: 0 0 24px rgba(214, 164, 69, 0.24);
 }
 
 .timeline {
   position: relative;
+  z-index: 2;
   display: grid;
-  gap: 34px;
+  gap: 42px;
   max-width: 1040px;
   margin: 0 auto;
-  padding: 20px 0 18px;
+  padding: 28px 0 34px;
+}
+
+.timeline::before,
+.timeline::after {
+  position: absolute;
+  z-index: -1;
+  width: 22px;
+  height: 22px;
+  background: #f2c66a;
+  box-shadow:
+    120px 80px 0 -7px rgba(244, 205, 111, 0.82),
+    -170px 170px 0 -8px rgba(255, 246, 221, 0.72),
+    260px 220px 0 -9px rgba(214, 164, 69, 0.75),
+    -260px 310px 0 -8px rgba(244, 205, 111, 0.7),
+    210px 430px 0 -9px rgba(255, 246, 221, 0.66);
+  content: '';
+  opacity: 0.72;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%);
+  animation: sparkle-breathe 5.8s ease-in-out infinite;
+}
+
+.timeline::before {
+  left: 12%;
+  top: 11%;
+}
+
+.timeline::after {
+  right: 9%;
+  top: 34%;
+  border-radius: 42% 58% 54% 46%;
+  clip-path: none;
+  animation-delay: -2.1s;
 }
 
 .timeline-flow {
   position: absolute;
-  inset: 0 44% 0 44%;
-  width: 12%;
+  inset: 0 42% 0 42%;
+  width: 16%;
   height: 100%;
   pointer-events: none;
+}
+
+.timeline-flow path {
+  fill: none;
+  stroke: rgba(244, 205, 111, 0.92);
+  stroke-dasharray: 9 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 6.4;
+  filter: drop-shadow(0 0 12px rgba(214, 164, 69, 0.64));
+  vector-effect: non-scaling-stroke;
+  animation: timeline-drift 8s linear infinite, timeline-flow-breathe 4.8s ease-in-out infinite;
+}
+
+.timeline-flow path + path {
+  stroke-width: 2.2;
+}
+
+.timeline-flow::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 238, 184, 0.24), transparent);
+  content: '';
+  mix-blend-mode: screen;
+  animation: timeline-comet-flow 5.6s ease-in-out infinite;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  animation: timeline-item-float 5.8s ease-in-out infinite, float-in 0.5s ease both;
+  animation-delay: var(--delay);
+}
+
+.timeline-item::before {
+  grid-column: 2;
+  justify-self: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 243, 210, 0.92);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #fff8d8, #f5ca65 34%, var(--accent)),
+    #d6a445;
+  box-shadow:
+    0 0 0 10px rgba(214, 164, 69, 0.12),
+    0 0 34px color-mix(in srgb, var(--accent) 56%, transparent),
+    0 0 72px rgba(214, 164, 69, 0.28);
+  content: '';
+  animation: timeline-node-breathe 3.4s ease-in-out infinite, timeline-node-drift 6.2s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.timeline-item:nth-child(3n)::before {
+  border-radius: 42% 58% 52% 48%;
+  transform: rotate(18deg);
+}
+
+.timeline-item:nth-child(4n)::before {
+  clip-path: polygon(50% 0%, 62% 34%, 98% 36%, 70% 56%, 80% 92%, 50% 70%, 20% 92%, 30% 56%, 2% 36%, 38% 34%);
+}
+
+.timeline-date {
+  grid-column: 1;
+  color: rgba(255, 239, 197, 0.82);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-align: right;
+  text-shadow: 0 0 16px rgba(214, 164, 69, 0.36);
+}
+
+.timeline-item.reverse .timeline-date {
+  grid-column: 3;
+  grid-row: 1;
+  text-align: left;
+}
+
+.timeline-card {
+  position: relative;
+  grid-column: 3;
+  padding: 22px 24px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 205, 111, 0.26);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035)),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 28%),
+    rgba(9, 14, 27, 0.72);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(0);
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  backdrop-filter: blur(14px);
+}
+
+.timeline-card:hover {
+  border-color: rgba(244, 205, 111, 0.5);
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.36),
+    0 0 34px color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: translateY(-7px);
+}
+
+.timeline-item.reverse .timeline-card {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.timeline-card::before {
+  position: absolute;
+  top: 30px;
+  left: -24px;
+  width: 48px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #ffe3a1, var(--accent));
+  box-shadow: 0 0 16px rgba(214, 164, 69, 0.62);
+  content: '';
+}
+
+.timeline-item.reverse .timeline-card::before {
+  right: -24px;
+  left: auto;
+  background: linear-gradient(90deg, var(--accent), #ffe3a1, transparent);
+}
+
+.timeline-card::after {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  width: 54px;
+  height: 54px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 236, 177, 0.14), transparent 44%),
+    repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 32%, transparent) 0 8deg, transparent 8deg 24deg);
+  content: '';
+  opacity: 0.78;
+  animation: rotate-slow 16s linear infinite;
+}
+
+.timeline-card span {
+  color: #f6cf77;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.timeline-card h3 {
+  margin: 9px 0;
+  color: #fff8e2;
+  font-size: 21px;
+  text-shadow: 0 0 16px rgba(214, 164, 69, 0.18);
+}
+
+.timeline-card p {
+  margin: 0 0 14px;
+  color: rgba(255, 246, 223, 0.72);
+  line-height: 1.65;
+}
+
+.timeline-card strong {
+  color: #ffe4a3;
+  font-weight: 900;
+}
+
+.timeline-section .empty-story {
+  position: relative;
+  z-index: 2;
+  border-color: rgba(244, 205, 111, 0.32);
+  background: rgba(11, 16, 30, 0.72);
+  color: rgba(255, 246, 223, 0.78);
+}
+
+/* legacy timeline rules kept below are intentionally overridden by the galaxy theme above */
+/*
 }
 
 .timeline-flow path {
@@ -1938,76 +2745,435 @@ onBeforeUnmount(() => {
 .timeline-card strong {
   color: #9c0c13;
 }
+*/
 
 .letter-section {
-  min-height: auto;
-  scroll-snap-align: none;
+  min-height: calc(100vh - 62px);
+  overflow: hidden;
+  scroll-snap-align: start;
   display: grid;
   place-items: center;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent),
-    repeating-linear-gradient(0deg, rgba(29, 37, 56, 0.06) 0 1px, transparent 1px 32px),
-    #fffdf8;
+    radial-gradient(circle at 16% 18%, rgba(214, 164, 69, 0.22), transparent 24%),
+    radial-gradient(circle at 82% 30%, rgba(37, 99, 235, 0.2), transparent 28%),
+    radial-gradient(circle at 62% 92%, rgba(15, 159, 122, 0.16), transparent 30%),
+    linear-gradient(160deg, #080c16, #111827 48%, #0b1020);
+  box-shadow: inset 0 94px 140px rgba(7, 11, 22, 0.58);
+}
+
+.letter-section::before,
+.letter-section::after,
+.ending-section::before,
+.ending-section::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.letter-section::before,
+.ending-section::before {
+  opacity: 0.78;
+  background-image:
+    radial-gradient(circle, rgba(255, 230, 166, 0.92) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(214, 164, 69, 0.62) 0 1.4px, transparent 2.6px);
+  background-size: 92px 82px, 154px 138px;
+  background-position: 10% 18%, 74% 32%;
+  animation: galaxy-star-drift 28s linear infinite reverse;
+}
+
+.letter-section::after {
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255, 246, 221, 0.12), transparent 42%),
+    conic-gradient(from 40deg at 50% 52%, transparent 0 82deg, rgba(214, 164, 69, 0.16) 108deg, transparent 148deg 360deg);
+  transform: rotate(11deg) scale(1.2);
+}
+
+.letter-cosmic-field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cosmic-shape {
+  position: absolute;
+  display: block;
+  opacity: 0.78;
+  filter: drop-shadow(0 0 22px rgba(244, 205, 111, 0.28));
+}
+
+.shape-rocket {
+  left: 10%;
+  bottom: 16%;
+  width: 34px;
+  height: 96px;
+  border-radius: 50% 50% 42% 42%;
+  background:
+    linear-gradient(90deg, transparent 0 8px, #fff8e2 8px 26px, transparent 26px),
+    linear-gradient(180deg, #f7d077, #9c0c13);
+  transform: rotate(-32deg);
+  animation: rocket-hover 5.4s ease-in-out infinite;
+}
+
+.shape-rocket::before,
+.shape-rocket::after {
+  position: absolute;
+  content: '';
+}
+
+.shape-rocket::before {
+  left: 50%;
+  top: -18px;
+  border-right: 17px solid transparent;
+  border-bottom: 24px solid #fff8e2;
+  border-left: 17px solid transparent;
+  transform: translateX(-50%);
+}
+
+.shape-rocket::after {
+  left: 50%;
+  bottom: -36px;
+  width: 26px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 0%, #fff8e2, #f2c66a 36%, transparent 72%);
+  transform: translateX(-50%);
+}
+
+.shape-black-hole {
+  right: 12%;
+  top: 15%;
+  width: 186px;
+  height: 186px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #020617 0 28%, rgba(2, 6, 23, 0.88) 29% 38%, transparent 39%),
+    conic-gradient(from 20deg, transparent, rgba(214, 164, 69, 0.68), rgba(156, 12, 19, 0.36), transparent 72%);
+  animation: black-hole-spin 14s linear infinite;
+}
+
+.shape-white-hole {
+  left: 18%;
+  top: 13%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #fff8e2 0 16%, rgba(244, 205, 111, 0.46) 17% 35%, transparent 66%),
+    repeating-conic-gradient(from 0deg, rgba(255, 248, 226, 0.2) 0 10deg, transparent 10deg 28deg);
+  animation: white-hole-pulse 4.6s ease-in-out infinite;
+}
+
+.shape-comet {
+  right: 24%;
+  bottom: 19%;
+  width: 128px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 248, 226, 0.8), #f2c66a);
+  transform: rotate(-18deg);
+  animation: comet-pass 5.8s ease-in-out infinite;
+}
+
+.shape-comet::after {
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff8e2;
+  box-shadow: 0 0 22px rgba(244, 205, 111, 0.72);
+  content: '';
+  transform: translateY(-50%);
 }
 
 .letter-paper {
-  max-width: 820px;
-  padding: 46px 52px;
+  position: relative;
+  z-index: 2;
+  width: min(920px, 100%);
+  max-width: 920px;
+  padding: 64px 70px 62px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 205, 111, 0.24);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 18% 20%, rgba(244, 205, 111, 0.16), transparent 38%),
+    radial-gradient(ellipse at 92% 18%, rgba(37, 99, 235, 0.13), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.055)),
+    rgba(9, 14, 27, 0.74);
+  box-shadow:
+    0 36px 100px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px);
+  isolation: isolate;
+}
+
+.letter-paper::before {
+  position: absolute;
+  top: -96px;
+  right: -76px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(244, 205, 111, 0.2);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 235, 178, 0.34), transparent 18%),
+    radial-gradient(circle at 50% 50%, rgba(214, 164, 69, 0.18), transparent 52%);
+  content: '';
+  animation: rotate-slow 22s linear infinite;
+}
+
+.letter-paper::after {
+  position: absolute;
+  left: 42px;
+  top: 44px;
+  width: 3px;
+  height: calc(100% - 88px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, #f2c66a, transparent);
+  box-shadow: 0 0 20px rgba(214, 164, 69, 0.45);
+  content: '';
+}
+
+.letter-paper .section-kicker,
+.letter-paper h2,
+.letter-paper p {
+  position: relative;
+  z-index: 2;
+}
+
+.letter-paper .section-kicker {
+  color: #f2c66a;
 }
 
 .letter-paper h2 {
   margin: 10px 0 22px;
-  color: #111827;
-  font-size: 34px;
+  color: #fff8e2;
+  font-size: 38px;
+  text-shadow: 0 0 24px rgba(214, 164, 69, 0.22);
 }
 
 .letter-paper p {
   margin: 0;
-  color: #374151;
+  color: rgba(255, 248, 226, 0.82);
   font-size: 18px;
-  line-height: 2;
+  line-height: 2.05;
   white-space: pre-wrap;
 }
 
+.letter-signal-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.letter-signal-grid article {
+  position: relative;
+  min-height: 178px;
+  padding: 18px 18px 16px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 205, 111, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 80% 12%, rgba(255, 248, 226, 0.12), transparent 25%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.letter-signal-grid article > i {
+  position: absolute;
+  right: 16px;
+  top: 15px;
+  width: 42px;
+  height: 42px;
+}
+
+.letter-signal-grid span,
+.letter-signal-grid strong,
+.letter-signal-grid em,
+.letter-signal-grid small {
+  position: relative;
+  z-index: 2;
+  display: block;
+}
+
+.letter-signal-grid span {
+  color: #f2c66a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.letter-signal-grid strong {
+  margin-top: 10px;
+  color: #fff8e2;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.letter-signal-grid em {
+  margin: 8px 0;
+  color: #fff;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.letter-signal-grid small {
+  color: rgba(255, 248, 226, 0.72);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.signal-rocket > i {
+  border-radius: 50% 50% 44% 44%;
+  background: linear-gradient(180deg, #fff8e2, #f2c66a 42%, #9c0c13);
+  transform: rotate(28deg);
+}
+
+.signal-rocket > i::after {
+  position: absolute;
+  left: 50%;
+  bottom: -16px;
+  width: 18px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 0%, #fff8e2, #f2c66a 36%, transparent 72%);
+  content: '';
+  transform: translateX(-50%);
+}
+
+.signal-white-hole > i {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #fff 0 16%, rgba(244, 205, 111, 0.66) 17% 38%, transparent 62%),
+    repeating-conic-gradient(rgba(255, 248, 226, 0.28) 0 12deg, transparent 12deg 30deg);
+}
+
+.signal-black-hole > i {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #020617 0 34%, transparent 36%),
+    conic-gradient(from 30deg, rgba(244, 205, 111, 0.78), rgba(37, 99, 235, 0.24), rgba(156, 12, 19, 0.5), rgba(244, 205, 111, 0.78));
+}
+
 .ending-section {
-  min-height: auto;
-  scroll-snap-align: none;
+  min-height: calc(100vh - 62px);
+  overflow: hidden;
+  scroll-snap-align: start;
   display: grid;
   place-items: center;
   background:
-    linear-gradient(130deg, rgba(156, 12, 19, 0.1), transparent 35%),
-    linear-gradient(300deg, rgba(37, 99, 235, 0.12), transparent 36%),
-    #f5fbf7;
+    radial-gradient(circle at 50% 42%, rgba(214, 164, 69, 0.24), transparent 18%),
+    radial-gradient(circle at 18% 76%, rgba(156, 12, 19, 0.2), transparent 28%),
+    radial-gradient(circle at 86% 22%, rgba(15, 159, 122, 0.18), transparent 28%),
+    linear-gradient(180deg, #070a13, #101828 54%, #070a13);
+  box-shadow: inset 0 98px 140px rgba(7, 11, 22, 0.58);
+}
+
+.ending-section::after {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, transparent 0 132px, rgba(244, 205, 111, 0.14) 133px 134px, transparent 135px 100%),
+    radial-gradient(circle at center, transparent 0 220px, rgba(255, 255, 255, 0.07) 221px 222px, transparent 223px 100%),
+    radial-gradient(circle at center, rgba(255, 237, 183, 0.16), transparent 22%);
+  animation: rotate-slow 34s linear infinite;
 }
 
 .ending-panel {
-  max-width: 760px;
-  padding: 42px;
+  position: relative;
+  z-index: 2;
+  width: min(900px, 100%);
+  max-width: 900px;
+  min-height: 430px;
+  padding: 78px 74px 66px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 205, 111, 0.26);
+  border-radius: 42px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(244, 205, 111, 0.18), transparent 34%),
+    radial-gradient(circle at 50% 48%, rgba(255, 248, 226, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    rgba(8, 12, 24, 0.78);
+  box-shadow:
+    0 36px 110px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   text-align: center;
+  backdrop-filter: blur(18px);
+  isolation: isolate;
+}
+
+.ending-panel::before {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 35%, #fff4c4, transparent 8%),
+    radial-gradient(circle at 50% 50%, rgba(214, 164, 69, 0.28), rgba(156, 12, 19, 0.18) 42%, transparent 68%);
+  box-shadow:
+    0 0 0 1px rgba(244, 205, 111, 0.2),
+    0 0 0 18px rgba(244, 205, 111, 0.035),
+    0 0 88px rgba(214, 164, 69, 0.24);
+  content: '';
+  opacity: 0.72;
+  transform: translate(-50%, -50%);
+}
+
+.ending-panel::after {
+  position: absolute;
+  inset: 24px;
+  border: 1px solid rgba(244, 205, 111, 0.2);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 130px, rgba(244, 205, 111, 0.12) 131px 132px, transparent 133px),
+    linear-gradient(90deg, transparent, rgba(244, 205, 111, 0.08), transparent);
+  content: '';
+  pointer-events: none;
 }
 
 .ending-panel h2 {
-  margin: 10px 0 16px;
-  color: #111827;
-  font-size: 38px;
+  position: relative;
+  z-index: 2;
+  margin: 34px 0 18px;
+  color: #fff8e2;
+  font-size: 42px;
+  text-shadow: 0 0 28px rgba(214, 164, 69, 0.24);
 }
 
 .ending-panel p {
+  position: relative;
+  z-index: 2;
   margin: 0 auto 26px;
-  max-width: 620px;
-  color: #4b5563;
-  font-size: 17px;
-  line-height: 1.8;
+  max-width: 660px;
+  color: rgba(255, 248, 226, 0.82);
+  font-size: 18px;
+  line-height: 1.95;
 }
 
 .ending-button {
+  position: relative;
+  z-index: 2;
   padding: 10px 20px;
-  border: 0;
-  border-radius: 6px;
-  background: #9c0c13;
-  color: #fff;
+  border: 1px solid rgba(244, 205, 111, 0.44);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9c0c13, #d6a445);
+  box-shadow: 0 18px 48px rgba(156, 12, 19, 0.28), 0 0 24px rgba(214, 164, 69, 0.24);
+  color: #fff8e2;
   cursor: pointer;
   font-weight: 700;
+}
+
+.ending-panel .section-kicker {
+  position: relative;
+  z-index: 2;
+  color: #f2c66a;
 }
 
 .empty-story {
@@ -2069,6 +3235,48 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes star-free-drift {
+  0% {
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.96);
+  }
+  28% {
+    transform: translate(-50%, -50%) translate3d(var(--star-drift-x), var(--star-drift-y), 0) scale(1.06);
+  }
+  63% {
+    transform: translate(-50%, -50%) translate3d(var(--star-drift-mid-x), var(--star-drift-mid-y), 0) scale(0.99);
+  }
+  100% {
+    transform: translate(-50%, -50%) translate3d(var(--star-return-x), var(--star-return-y), 0) scale(1.04);
+  }
+}
+
+@keyframes star-core-twinkle {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 42%, transparent));
+  }
+  47% {
+    opacity: 1;
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) 76%, transparent));
+  }
+  71% {
+    opacity: 0.86;
+  }
+}
+
+@keyframes sparkle-breathe {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: scale(0.92) rotate(0deg);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.18) rotate(12deg);
+  }
+}
+
 @keyframes story-float {
   0%,
   100% {
@@ -2108,6 +3316,39 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes galaxy-star-drift {
+  from {
+    background-position: 5% 10%, 68% 24%, 36% 88%;
+  }
+  to {
+    background-position: 32% 26%, 50% 56%, 72% 34%;
+  }
+}
+
+@keyframes timeline-flow-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 7px rgba(214, 164, 69, 0.42));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 15px rgba(244, 205, 111, 0.72));
+  }
+}
+
+@keyframes timeline-comet-flow {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translateY(-18%);
+  }
+  50% {
+    opacity: 0.74;
+    transform: translateY(18%);
+  }
+}
+
 @keyframes timeline-node-breathe {
   0%,
   100% {
@@ -2121,6 +3362,16 @@ onBeforeUnmount(() => {
       0 0 0 12px rgba(214, 164, 69, 0.08),
       0 0 38px color-mix(in srgb, var(--accent) 55%, transparent);
     transform: scale(1.13);
+  }
+}
+
+@keyframes timeline-node-drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
   }
 }
 
@@ -2153,6 +3404,79 @@ onBeforeUnmount(() => {
   }
   50% {
     filter: drop-shadow(0 0 20px rgba(214, 164, 69, 0.18));
+  }
+}
+
+@keyframes radar-sweep {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes radar-scan-pulse {
+  0% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) scale(0.78);
+    box-shadow:
+      0 0 0 0 rgba(214, 164, 69, 0.2),
+      inset 0 0 26px rgba(214, 164, 69, 0.08);
+  }
+  72% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.16);
+    box-shadow:
+      0 0 0 28px rgba(214, 164, 69, 0),
+      inset 0 0 26px rgba(214, 164, 69, 0.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.16);
+  }
+}
+
+@keyframes rocket-hover {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-32deg);
+  }
+  50% {
+    transform: translate3d(16px, -18px, 0) rotate(-28deg);
+  }
+}
+
+@keyframes black-hole-spin {
+  from {
+    transform: rotate(0deg) scaleX(1.28);
+  }
+  to {
+    transform: rotate(360deg) scaleX(1.28);
+  }
+}
+
+@keyframes white-hole-pulse {
+  0%,
+  100% {
+    opacity: 0.46;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes comet-pass {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translate3d(-22px, 18px, 0) rotate(-18deg);
+  }
+  45% {
+    opacity: 0.92;
+    transform: translate3d(24px, -14px, 0) rotate(-18deg);
   }
 }
 
@@ -2190,6 +3514,14 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr;
   }
 
+  .constellation-stage {
+    min-height: auto;
+  }
+
+  .star-orbit {
+    min-height: 560px;
+  }
+
   .score-planet {
     width: 300px;
     height: 300px;
@@ -2197,10 +3529,6 @@ onBeforeUnmount(() => {
 
   .story-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .story-orb {
-    width: min(100%, 280px);
   }
 
   .star-detail-panel {
@@ -2287,10 +3615,9 @@ onBeforeUnmount(() => {
   }
 
   .story-cosmos {
-    min-height: auto;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    min-height: 720px;
     padding: 16px;
+    border-radius: 20px;
   }
 
   .story-orbit-lines,
@@ -2299,19 +3626,22 @@ onBeforeUnmount(() => {
   }
 
   .story-orb {
-    width: 100%;
-    max-width: 310px;
-    min-height: 280px;
-    justify-self: center;
-    animation: none;
+    max-width: none;
+    min-height: 0;
+    padding: 20px;
   }
 
   .star-orbit {
-    min-height: 420px;
+    min-height: 520px;
   }
 
   .star-system {
-    width: min(92%, 380px);
+    width: min(94%, 480px);
+  }
+
+  .radar-chart::before,
+  .radar-chart::after {
+    width: min(80%, 330px);
   }
 
   .star-center {

@@ -31,6 +31,7 @@
       </el-select>
       <el-input-number v-model="query.max_risk_students" :min="3" :max="30" controls-position="right" />
       <el-button class="btn-main" :loading="loading" @click="runAnalysis">生成分析</el-button>
+      <el-button class="btn-plain" :disabled="loading || !query.grade" @click="runAnalysis({ forceRefresh: true })">重新生成</el-button>
       <el-button class="btn-plain" :disabled="loading" @click="resetFilters">重置</el-button>
       <span class="scope-hint">{{ scopeHint }}</span>
     </section>
@@ -43,7 +44,10 @@
         <article class="summary-card main-summary">
           <span>整体画像</span>
           <strong>{{ result.summary }}</strong>
-          <small>来源：{{ result.source === 'llm' ? '大模型分析' : '本地规则兜底' }} · {{ result.term }}</small>
+          <small>
+            来源：{{ result.source === 'llm' ? '大模型分析' : '本地规则兜底' }} · {{ result.term }}
+            <template v-if="result.cache"> · {{ result.cache.hit ? '已读取缓存' : '新生成缓存' }}</template>
+          </small>
         </article>
         <article v-for="item in metricCards" :key="item.key" class="summary-card metric-card">
           <span>{{ item.label }}</span>
@@ -237,7 +241,7 @@ const loadClasses = async () => {
   }
 }
 
-const runAnalysis = async () => {
+const runAnalysis = async ({ forceRefresh = false } = {}) => {
   if (!query.grade) {
     ElMessage.warning('请先选择年级')
     return
@@ -248,9 +252,15 @@ const runAnalysis = async () => {
       grade: query.grade,
       class_ids: query.class_ids,
       max_risk_students: query.max_risk_students,
+      force_refresh: forceRefresh,
     }
     const res = await teacherService.analyzeInsights(payload)
     result.value = res?.data || null
+    if (result.value?.cache?.hit) {
+      ElMessage.success('已读取已有画像缓存')
+    } else if (result.value?.cache) {
+      ElMessage.success('画像已生成并写入缓存')
+    }
     if (result.value?.source !== 'llm') {
       ElMessage.warning('大模型暂不可用，已使用本地规则生成兜底分析')
     }

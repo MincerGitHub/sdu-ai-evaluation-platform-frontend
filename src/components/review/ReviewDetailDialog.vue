@@ -431,9 +431,15 @@ async function resolveAttachments(rawList = []) {
       filename: metadata.filename || item.filename || item.file_id,
       content_type: metadata.content_type || item.content_type || '',
       size: metadata.size || item.size || 0,
+      url: metadata.url || item.url || '',
+      public_url: metadata.public_url || item.public_url || '',
     })
   }
   return mapped
+}
+
+function getAttachmentAccessUrl(file) {
+  return file?.public_url || file?.url || ''
 }
 
 async function loadAttachmentPreview(file) {
@@ -446,8 +452,9 @@ async function loadAttachmentPreview(file) {
 
   previewLoading.value = true
   try {
+    const accessUrl = getAttachmentAccessUrl(file)
     if (kind === 'image' || kind === 'pdf') {
-      const blob = await fileService.getFileBlob(file.file_id)
+      const blob = accessUrl ? await fileService.getFileBlobByUrl(accessUrl) : await fileService.getFileBlob(file.file_id)
       previewUrl.value = URL.createObjectURL(blob)
     } else if (kind === 'docx') {
       if (!mammothModulePromise) {
@@ -455,7 +462,9 @@ async function loadAttachmentPreview(file) {
       }
       const mammothModule = await mammothModulePromise
       const mammoth = mammothModule?.default || mammothModule
-      const buffer = await fileService.getFileArrayBuffer(file.file_id)
+      const buffer = accessUrl
+        ? await fileService.getFileArrayBufferByUrl(accessUrl)
+        : await fileService.getFileArrayBuffer(file.file_id)
       const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
       docxHtml.value = result?.value || '<p>文档无可展示内容</p>'
     }
@@ -474,7 +483,9 @@ async function selectAttachment(fileId) {
 
 function downloadAttachment(file) {
   if (!file?.file_id) return
-  fileService.downloadFile(file.file_id, file.name).catch((error) => {
+  const accessUrl = getAttachmentAccessUrl(file)
+  const task = accessUrl ? fileService.downloadFileByUrl(accessUrl, file.name) : fileService.downloadFile(file.file_id, file.name)
+  task.catch((error) => {
     ElMessage.error(error?.message || '附件下载失败')
   })
 }
@@ -541,7 +552,11 @@ async function open(applicationId, contextRow = null) {
       await selectAttachment(attachments.value[0].file_id)
     }
 
-    await fetchAiReport(applicationId)
+    if (detail.value?.ai_report) {
+      aiReport.value = detail.value.ai_report
+    } else {
+      await fetchAiReport(applicationId)
+    }
   } catch (error) {
     ElMessage.error(error?.message || '获取详情失败')
   } finally {

@@ -158,7 +158,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import appealService from '@/services/appealService'
@@ -183,6 +183,7 @@ const announcementOptions = ref([])
 const applicationOptions = ref([])
 const applicationOptionLoading = ref(false)
 const attachments = ref([])
+const applyingRouteDefaults = ref(false)
 let announcementRefreshTimer = null
 const MAX_UPLOAD_SIZE_MB = 25
 const form = reactive({
@@ -194,15 +195,27 @@ const form = reactive({
 
 const currentUserId = computed(() => authStore.user?.id || null)
 
-const syncModeFromRoute = () => {
-  isCreateMode.value = route.query.mode === 'create'
+const readPositiveInt = (value) => {
+  const number = Number(value)
+  return Number.isInteger(number) && number > 0 ? number : null
 }
 
-watch(() => route.query.mode, syncModeFromRoute)
+const syncModeFromRoute = async () => {
+  isCreateMode.value = route.query.mode === 'create'
+  if (isCreateMode.value) {
+    await applyCreateQueryDefaults()
+  }
+}
+
+watch(
+  () => [route.query.mode, route.query.announcement_id, route.query.application_id],
+  syncModeFromRoute
+)
 
 watch(
   () => form.announcementId,
   () => {
+    if (applyingRouteDefaults.value) return
     form.applicationId = null
     applicationOptions.value = []
     searchApplicationOptions('')
@@ -284,6 +297,50 @@ const searchApplicationOptions = async (keyword = '') => {
     ElMessage.error(error?.message || '搜索申报失败')
   } finally {
     applicationOptionLoading.value = false
+  }
+}
+
+const ensureSelectedApplicationOption = async (applicationId) => {
+  if (!form.announcementId || !applicationId) return
+  if (applicationOptions.value.some((item) => Number(item.application_id) === Number(applicationId))) return
+  try {
+    const res = await appealService.searchApplicationOptions({
+      announcement_id: form.announcementId,
+      keyword: String(applicationId),
+      limit: 1,
+    })
+    const list = Array.isArray(res?.data) ? res.data : []
+    if (list.length) {
+      const knownIds = new Set(applicationOptions.value.map((item) => Number(item.application_id)))
+      applicationOptions.value = [
+        ...list.filter((item) => !knownIds.has(Number(item.application_id))),
+        ...applicationOptions.value,
+      ]
+    }
+  } catch (error) {
+    // 预填失败不阻断申诉创建；学生仍可手动搜索选择。
+  }
+}
+
+const applyCreateQueryDefaults = async () => {
+  const announcementId = readPositiveInt(route.query.announcement_id)
+  const applicationId = readPositiveInt(route.query.application_id)
+  if (!announcementId && !applicationId) return
+
+  applyingRouteDefaults.value = true
+  if (announcementId) {
+    form.announcementId = announcementId
+  }
+  if (applicationId) {
+    form.applicationId = applicationId
+  }
+  await nextTick()
+  applyingRouteDefaults.value = false
+
+  if (applicationId) {
+    await ensureSelectedApplicationOption(applicationId)
+  } else if (announcementId) {
+    await searchApplicationOptions('')
   }
 }
 
