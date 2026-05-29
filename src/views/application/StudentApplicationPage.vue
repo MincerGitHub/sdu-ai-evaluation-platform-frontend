@@ -6,6 +6,7 @@
 
     <ApplicationTable @edit="openEdit" @view="openView">
       <template #toolbar-right>
+        <el-button class="btn-plain" @click="openAutoFill">AI 自动填报</el-button>
         <el-button class="btn-main" @click="openCreate">新建申报</el-button>
       </template>
     </ApplicationTable>
@@ -32,22 +33,25 @@
       :show-decision-actions="false"
       :on-fetch-detail="fetchStudentDetail"
     />
+    <AIAutoFillDialog ref="autoFillDialogRef" @success="handleAutoFillSuccess" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useApplicationStore } from '@/stores/application'
 import { useAuthStore } from '@/stores/auth'
 import { getCascaderOptions } from '@/utils/dealAwardUid'
 import applicationService from '@/services/applicationService'
 import ApplicationTable from '@/components/application/ApplicationTable.vue'
 import ApplicationFormDialog from '@/components/application/ApplicationFormDialog.vue'
+import AIAutoFillDialog from '@/components/application/AIAutoFillDialog.vue'
 import ReviewDetailDialog from '@/components/review/ReviewDetailDialog.vue'
 
 // ---------- 路由参数 ----------
 const route = useRoute()
+const router = useRouter()
 const category = computed(() => route.params.category)
 const subType = computed(() => route.params.subType)
 
@@ -85,10 +89,15 @@ const cascaderOptions = computed(() => getCascaderOptions(category.value, subTyp
 const createDialogRef = ref(null)
 const editDialogRef = ref(null)
 const viewDialogRef = ref(null)
+const autoFillDialogRef = ref(null)
 const editingRow = ref(null)
 
 function openCreate() {
     createDialogRef.value?.open()
+}
+
+function openAutoFill() {
+    autoFillDialogRef.value?.open()
 }
 
 function openEdit(row) {
@@ -129,6 +138,16 @@ async function fetchStudentDetail(applicationId) {
 // ---------- 刷新 ----------
 function refresh() {
     store.fetchApplicationsByCategory()
+}
+
+async function handleAutoFillSuccess(data) {
+    const targetCategory = data?.category
+    const targetSubType = data?.sub_type
+    if (targetCategory && targetSubType && (targetCategory !== category.value || targetSubType !== subType.value)) {
+        await router.push({ name: 'StudentApplication', params: { category: targetCategory, subType: targetSubType } })
+        return
+    }
+    refresh()
 }
 
 // ---------- 路由参数变化时重新加载 ----------

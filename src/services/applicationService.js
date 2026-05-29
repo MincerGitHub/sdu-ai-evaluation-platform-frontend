@@ -11,6 +11,26 @@ const applicationService = {
         return http.post('/applications', payload)
     },
 
+    /** 创建 AI 自动填报任务 */
+    createAutoFillJob(payload) {
+        return http.post('/applications/auto-fill/jobs', payload)
+    },
+
+    /** 获取 AI 自动填报任务 */
+    getAutoFillJob(jobId) {
+        return http.get(`/applications/auto-fill/jobs/${jobId}`)
+    },
+
+    /** 取消 AI 自动填报任务 */
+    cancelAutoFillJob(jobId) {
+        return http.delete(`/applications/auto-fill/jobs/${jobId}`)
+    },
+
+    /** 确认 AI 自动填报预览并创建申报 */
+    confirmAutoFillJob(jobId, payload) {
+        return http.post(`/applications/auto-fill/jobs/${jobId}/confirm`, payload)
+    },
+
     /** 分类汇总 */
     getCategorySummary(params = {}) {
         return http.get('/applications/my/category-summary', { params })

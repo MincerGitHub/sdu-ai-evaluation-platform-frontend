@@ -4,7 +4,10 @@
       <h2>学生首页</h2>
     </header>
 
-    <p class="welcome">欢迎回来，{{ user?.name || '同学' }}！</p>
+    <div class="dashboard-headline">
+      <p class="welcome">欢迎回来，{{ user?.name || '同学' }}！</p>
+      <el-button class="btn-main" @click="openAutoFill">AI 自动填报</el-button>
+    </div>
 
     <el-row :gutter="12" class="metrics">
       <el-col :xs="12" :sm="6">
@@ -22,24 +25,29 @@
     </el-row>
 
     <ScoreBoard :score-summary="scoreSummary" />
+    <AIAutoFillDialog ref="autoFillDialogRef" @success="handleAutoFillSuccess" />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import applicationService from '@/services/applicationService'
 import ScoreBoard from '@/components/score/ScoreBoard.vue'
+import AIAutoFillDialog from '@/components/application/AIAutoFillDialog.vue'
 
 const authStore = useAuthStore()
 const user = computed(() => authStore.user)
+const router = useRouter()
 
 const totalCount = ref(0)
 const pendingCount = ref(0)
 const approvedCount = ref(0)
 const totalScore = ref(0)
 const summaryData = ref({})
+const autoFillDialogRef = ref(null)
 
 const scoreSummary = computed(() => summaryData.value?.score_summary || null)
 
@@ -59,11 +67,30 @@ const fetchSummary = async () => {
 }
 
 onMounted(fetchSummary)
+
+function openAutoFill() {
+  autoFillDialogRef.value?.open()
+}
+
+async function handleAutoFillSuccess(data) {
+  await fetchSummary()
+  if (data?.category && data?.sub_type) {
+    router.push({ name: 'StudentApplication', params: { category: data.category, subType: data.sub_type } })
+  }
+}
 </script>
 
 <style scoped>
+.dashboard-headline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .welcome {
-  margin: 0 0 12px;
+  margin: 0;
   color: #303133;
 }
 

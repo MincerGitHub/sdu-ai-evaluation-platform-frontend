@@ -18,6 +18,10 @@
               {{ statusLabel(detail.status) }}
             </el-tag>
           </el-descriptions-item>
+          <el-descriptions-item label="标签">
+            <el-tag v-if="hasAutoTag(detail)" type="success" effect="plain" size="small">auto</el-tag>
+            <span v-else>-</span>
+          </el-descriptions-item>
           <el-descriptions-item label="分数">{{ detail.score ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="发生日期">{{ detail.occurred_at || '-' }}</el-descriptions-item>
           <el-descriptions-item label="申报标题" :span="3">{{ detail.title || '-' }}</el-descriptions-item>
@@ -310,6 +314,10 @@ function checkStatusText(status) {
 
 function joinText(value) {
   return Array.isArray(value) && value.length ? value.join('、') : '-'
+}
+
+function hasAutoTag(row) {
+  return Array.isArray(row?.tags) && row.tags.includes('auto')
 }
 
 function formatDateTime(value) {

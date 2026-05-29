@@ -15,7 +15,14 @@
       stripe
       row-key="application_id"
     >
-      <el-table-column prop="title" label="申报名称" min-width="220" show-overflow-tooltip />
+      <el-table-column label="申报名称" min-width="220" show-overflow-tooltip>
+        <template #default="{ row }">
+          <div class="title-cell">
+            <span class="title-text">{{ row.title || '-' }}</span>
+            <el-tag v-if="hasAutoTag(row)" type="success" effect="plain" size="small">auto</el-tag>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="评审规则" min-width="360" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="rule-reference" :title="reviewRule(row)">
@@ -97,6 +104,10 @@ function reviewRule(row) {
   return row?.award_rule?.rule_name || row?.award_rule_name || formatAwardRuleByUid(row?.award_uid)
 }
 
+function hasAutoTag(row) {
+  return Array.isArray(row?.tags) && row.tags.includes('auto')
+}
+
 // 删除
 async function handleDelete(row) {
   try {
@@ -153,6 +164,19 @@ async function handleEdit(row) {
   display: block;
   overflow: hidden;
   color: #606266;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title-text {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

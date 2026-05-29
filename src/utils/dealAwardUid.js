@@ -33,6 +33,25 @@ export function getCascaderOptions(categoryId, subId) {
     return sub.children.map(toCascaderOption)
 }
 
+export function getCategoryOptions() {
+    return CATEGORY_TREE.map((item) => ({
+        label: item.name,
+        value: item.id,
+        children: (item.children || []).map((child) => ({
+            label: child.name,
+            value: child.id,
+        })),
+    }))
+}
+
+export function getSubTypeOptions(categoryId) {
+    const category = CATEGORY_TREE.find(c => c.id === categoryId)
+    return (category?.children || []).map((item) => ({
+        label: item.name,
+        value: item.id,
+    }))
+}
+
 /**
  * 根据 uid 从 scoreMap 获取分数信息
  * @param {number|string} uid
